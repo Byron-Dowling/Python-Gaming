@@ -205,7 +205,7 @@ class Spaceship(GameSprite):
         self.ShipSmoothscale = smsc
         self.MANEUVERABILITY = 5
         self.ACCELERATION = 0.50
-        self.MAX_VELOCITY = 25
+        self.MAX_VELOCITY = 30
         self.ANGLE = 0
         self.direction = Vector2(UP)
         self.Idle_Frames = len(os.listdir("Assets\Sprites\Spaceships\Idle"))
