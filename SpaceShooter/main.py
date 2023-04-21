@@ -329,11 +329,39 @@ class Asteroid(GameSprite):
         self.Exploding = False
         self.Smoothscale=smsc_dimensions
         self.spriteObject = load_sprite(self.IdleImageLink, self.Smoothscale)
+        self.ANGLE = random.randrange(0, 359, 3)
+        self.direction = Vector2(UP)
+        self.ACCELERATION = 0.125
+        self.MAX_VELOCITY = 2.5
 
-        GameSprite.__init__(self, location, self.spriteObject, Vector2(0))
+        ## Rotate by degrees in-place
+        self.direction.rotate_ip(self.ANGLE)
+
+        self.direction[0] = abs(self.direction[0])
+        self.direction[1] = abs(self.direction[1])
+
+        self.getUnitCircleQuadrant()
+
+        GameSprite.__init__(self, location, self.spriteObject, Vector2(self.direction))
+
+    ## Modified Unit Circle Trig Math
+    def getUnitCircleQuadrant(self):
+        if self.ANGLE >= 0 and self.ANGLE <= 90:
+            ## Where X is negative and Y is negative
+            self.direction[0] = self.direction[0] * -1
+            self.direction[1] = self.direction[1] * -1
+        elif self.ANGLE > 90 and self.ANGLE <= 180:
+            ## Where X is negative and Y is positve
+            self.direction[0] = self.direction[0] * -1
+        elif self.ANGLE > 270 and self.ANGLE <= 359:
+            ## Where X is positive and Y is negative
+            self.direction[1] = self.direction[1] * -1
 
     def drawAsteroid(self, screen):
+        if self.velocity.length() < self.MAX_VELOCITY:
+            self.velocity += self.direction * self.ACCELERATION
         GameSprite.draw(self, screen)
+        GameSprite.move(self, screen, False)
 
     def destroy(self):
         imageLink = f"Assets\Sprites\Asteroids\Explosion\{self.Explosion_Frame}.png"
@@ -345,6 +373,8 @@ class Asteroid(GameSprite):
         else:
             self.InOrbit = False
             self.kill()
+
+        
 
 ###################################################################################################
 """
@@ -408,14 +438,13 @@ class GameController:
         self.Asteroid_Smoothscale = (150,150)
         self.Spaceship_Smoothscale = (80,80)
         self.FORWARD_ACCELEARATION = 25
-        self.MIN_ASTEROID_DISTANCE = 250
         self.MISSILE_COOLDOWN_TIME = 0
 
         self.Locations = [(100,150),(300,300),(800,400),(1300,200),
                                    (1100,600),(700,700),(1500,620),(650,450),
                                    (1700,850),(800,800),(100,620),(150,450),
                                    (1700,100),(100,800),(1100,120),(150,1000)]
-        self.AsteroidCount = 8
+        self.AsteroidCount = 12
         self.Asteroids = []
         self.MissilesInAir = pygame.sprite.Group()
 
