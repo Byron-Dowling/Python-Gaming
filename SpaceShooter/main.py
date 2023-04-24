@@ -167,6 +167,9 @@ class Shields(GameSprite):
         self.Location = location
         self.Smoothscale = (170,170)
         self.imageLink = f'Assets\Sprites\Shields\{self.Shield_Frame}.png'
+        self.SHIELD_HEALTH = 75
+        self.SHIELDS_COOLDOWN = 150
+        self.COOLING_DOWN = False
 
         self.spriteObject = load_sprite_rotated(self.imageLink, self.Smoothscale, 0)
 
@@ -183,6 +186,29 @@ class Shields(GameSprite):
             self.imageLink = f'Assets\Sprites\Shields\{self.Shield_Frame}.png'
             self.spriteObject = load_sprite(self.imageLink, self.Smoothscale)
             self.sprite = self.spriteObject
+
+    def updateShields(self, usingShields):
+        if self.COOLING_DOWN == False:
+            if usingShields:
+                # print(f'Shield Health: {self.SHIELD_HEALTH}')
+                if self.SHIELD_HEALTH > 0:
+                    self.SHIELD_HEALTH -= 1
+                else:
+                    # print("Shields are DEPLETED!")
+                    self.COOLING_DOWN = True
+
+            else:
+                if self.SHIELD_HEALTH < 75:
+                    self.SHIELD_HEALTH += 1
+        else:
+            # print(f'Shields are recharging. Cooldown Timer: {self.SHIELDS_COOLDOWN}')
+            self.SHIELDS_COOLDOWN -= 1
+
+            if self.SHIELDS_COOLDOWN == 0:
+                # print("Shields have recharged!")
+                self.COOLING_DOWN = False
+                self.SHIELD_HEALTH = 75
+                self.SHIELDS_COOLDOWN = 50
 
 ###################################################################################################
 """
@@ -203,6 +229,10 @@ class Spaceship(GameSprite):
         self.RotateRight = False
         self.Firing = False
         self.ShipSmoothscale = smsc
+        self.RED = (255,0,0)
+        self.GREEN = (0,255,0)
+        self.BLUE = (0,0,255)
+        self.HEALTH = 10
         self.MANEUVERABILITY = 5
         self.ACCELERATION = 0.50
         self.MAX_VELOCITY = 30
@@ -281,6 +311,18 @@ class Spaceship(GameSprite):
         else:
             self.Idle_Frame = 0
 
+    def drawHealthBar(self, screen):
+        self.updateSpaceshipLocation()
+        pygame.draw.rect(screen, self.RED, (self.currentPosition[0] - 25, self.currentPosition[1] + 50, 50, 10))
+        pygame.draw.rect(screen, self.GREEN, (self.currentPosition[0] - 25, self.currentPosition[1] + 50, 50 - (5 * (10 - self.HEALTH)), 10))
+
+    def drawShieldBar(self, screen):
+        shield_font = pygame.font.SysFont('Algerian', 30)
+        player_shield_text = shield_font.render(
+                "Player Shields: " + str(self.SpaceshipShields.SHIELD_HEALTH), 1, (0,0,255))
+        screen.blit(player_shield_text, (1400,10))
+
+
     def updateSpaceshipSpriteImage(self):
         if self.Idle:
             self.ImageLink = f'Assets\Sprites\Spaceships\Idle\{self.Idle_Frame}.png'
@@ -307,7 +349,6 @@ class Spaceship(GameSprite):
         self.updateSpaceshipLocation()
         SpaceshipMissile = Missiles(self.currentPosition, self.direction, self.ANGLE)
         return SpaceshipMissile
-
 
 
 ###################################################################################################
@@ -444,7 +485,7 @@ class GameController:
                                    (1100,600),(700,700),(1500,620),(650,450),
                                    (1700,850),(800,800),(100,620),(150,450),
                                    (1700,100),(100,800),(1100,120),(150,1000)]
-        self.AsteroidCount = 12
+        self.AsteroidCount = 16
         self.Asteroids = []
         self.MissilesInAir = pygame.sprite.Group()
 
@@ -544,6 +585,8 @@ while GC.Running:
     GC.drawAsteroids()
 
     Player1_Spaceship.draw(screen)
+    Player1_Spaceship.drawHealthBar(screen)
+    Player1_Spaceship.drawShieldBar(screen)
 
 
     """
@@ -556,11 +599,10 @@ while GC.Running:
     if keys[pygame.K_RIGHT]:
         Player1_Spaceship.rotate(clockwise=False)
     if keys[pygame.K_RSHIFT]:
-        if Player1_Spaceship.Shields==False:
+        if Player1_Spaceship.SpaceshipShields.COOLING_DOWN == False:
             Player1_Spaceship.Shields=True
             Player1_Spaceship.SpaceshipShields.updateFrames()
             Player1_Spaceship.updateSpaceshipLocation()
-            Player1_Spaceship.SpaceshipShields.draw(screen)
     if keys[pygame.K_UP]:
         Player1_Spaceship.accelerate()
         Player1_Spaceship.move(screen)
@@ -610,19 +652,28 @@ while GC.Running:
             GC.Asteroids.remove(asteroid)
 
 
-
     if tick % 3 == 0:
         GC.updateFrames()
         Player1_Spaceship.updateFrames()
         Player1_Spaceship.updateSpaceshipSpriteImage()
+
+        ## Testing that the health bar decline actually works
+        # Player1_Spaceship.HEALTH -= 1
     
     if GC.MISSILE_COOLDOWN_TIME % 10 == 0:
         Player1_Spaceship.Firing = False
 
+
+    ## Dealing with Shields and Shit
+    Player1_Spaceship.SpaceshipShields.updateShields(Player1_Spaceship.Shields)
+
+    if Player1_Spaceship.Shields == True:
+        Player1_Spaceship.SpaceshipShields.draw(screen)
 
     tick += 1
     GC.MISSILE_COOLDOWN_TIME += 1
     Player1_Spaceship.Shields=False
 
     pygame.display.flip()
+
 ###################################################################################################
