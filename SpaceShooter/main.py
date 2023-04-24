@@ -273,10 +273,8 @@ class Spaceship(GameSprite):
 
         ## Rotate by degrees in-place
         self.direction.rotate_ip(self.ANGLE)
-
         self.direction[0] = abs(self.direction[0])
         self.direction[1] = abs(self.direction[1])
-
         self.getUnitCircleQuadrant()
 
         self.velocity = self.direction * self.ACCELERATION
@@ -302,7 +300,6 @@ class Spaceship(GameSprite):
         shuffle(self.ShipSpawnLocations)
         selection = []
         selection.append(self.ShipSpawnLocations[0])
-        print(selection[0])
         return selection[0]
     
     def updateFrames(self):
@@ -322,7 +319,6 @@ class Spaceship(GameSprite):
                 "Player Shields: " + str(self.SpaceshipShields.SHIELD_HEALTH), 1, (0,0,255))
         screen.blit(player_shield_text, (1400,10))
 
-
     def updateSpaceshipSpriteImage(self):
         if self.Idle:
             self.ImageLink = f'Assets\Sprites\Spaceships\Idle\{self.Idle_Frame}.png'
@@ -340,16 +336,13 @@ class Spaceship(GameSprite):
     def fireMissile(self):
         ## Rotate by degrees in-place
         self.direction.rotate_ip(self.ANGLE)
-
         self.direction[0] = abs(self.direction[0])
         self.direction[1] = abs(self.direction[1])
-
         self.getUnitCircleQuadrant()
 
         self.updateSpaceshipLocation()
         SpaceshipMissile = Missiles(self.currentPosition, self.direction, self.ANGLE)
         return SpaceshipMissile
-
 
 ###################################################################################################
 """
@@ -413,9 +406,7 @@ class Asteroid(GameSprite):
             self.Explosion_Frame += 1
         else:
             self.InOrbit = False
-            self.kill()
-
-        
+            self.kill() 
 
 ###################################################################################################
 """
@@ -496,12 +487,18 @@ class GameController:
             temp = Asteroid(position, self.Asteroid_Smoothscale)
             self.Asteroids.append(temp)
 
-
     def getScreenSize(self):
         dimensions = (self.screenWidth, self.screenHeight)
         return dimensions
     
     def drawAsteroids(self):
+        if len(self.Asteroids) < 6:
+            shuffle(self.Locations)
+            for i in range(len(self.Asteroids)):
+                position = self.Locations[i]
+                temp = Asteroid(position, self.Asteroid_Smoothscale)
+                self.Asteroids.append(temp)
+
         for AST in self.Asteroids:
             AST.drawAsteroid(self.screen)
     
@@ -568,7 +565,6 @@ while GC.Running:
     """
         Background Layering
     """
-
     screen.fill((0,0,0))
 
     StarryBackground = Background(f"Assets/Background/Stars/{GC.BG_Frame}.png", [0, 0], (screenWidth, screenHeight))
@@ -622,7 +618,8 @@ while GC.Running:
 
     if Player1_Spaceship.Firing == True:
         Player1_Spaceship.updateSpaceshipLocation()
-        
+
+    ## Looping through Missiles and checking for Asteroid Collisions    
     for missile in GC.MissilesInAir:
         missile.accelerate()
         result = checkForOffscreenMovement(missile.position, GC.screen)
@@ -643,7 +640,7 @@ while GC.Running:
             missile.explode()
             GC.MissilesInAir.remove(missile)
 
-    
+    ## Looping through Asteroids and playing explosion animations if collision recorded
     for asteroid in GC.Asteroids:
         if asteroid.InOrbit:
             if asteroid.Exploding:
@@ -651,7 +648,7 @@ while GC.Running:
         else:
             GC.Asteroids.remove(asteroid)
 
-
+    
     if tick % 3 == 0:
         GC.updateFrames()
         Player1_Spaceship.updateFrames()
@@ -664,7 +661,7 @@ while GC.Running:
         Player1_Spaceship.Firing = False
 
 
-    ## Dealing with Shields and Shit
+    ## Dealing with Shields and Stuff
     Player1_Spaceship.SpaceshipShields.updateShields(Player1_Spaceship.Shields)
 
     if Player1_Spaceship.Shields == True:
