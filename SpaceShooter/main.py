@@ -20,7 +20,7 @@ import os
 from PIL import Image, ImageDraw
 from random import shuffle
 from pygame.math import Vector2
-from utilities import load_sprite, load_sprite_rotated, wrap_position
+from utilities import load_sprite, load_sprite_rotated, wrap_position, checkForOffscreenMovement
 
 UP = Vector2(0, -1)
 
@@ -190,22 +190,17 @@ class Shields(GameSprite):
     def updateShields(self, usingShields):
         if self.COOLING_DOWN == False:
             if usingShields:
-                # print(f'Shield Health: {self.SHIELD_HEALTH}')
                 if self.SHIELD_HEALTH > 0:
                     self.SHIELD_HEALTH -= 1
                 else:
-                    # print("Shields are DEPLETED!")
                     self.COOLING_DOWN = True
-
             else:
                 if self.SHIELD_HEALTH < 75:
                     self.SHIELD_HEALTH += 1
         else:
-            # print(f'Shields are recharging. Cooldown Timer: {self.SHIELDS_COOLDOWN}')
             self.SHIELDS_COOLDOWN -= 1
 
             if self.SHIELDS_COOLDOWN == 0:
-                # print("Shields have recharged!")
                 self.COOLING_DOWN = False
                 self.SHIELD_HEALTH = 75
                 self.SHIELDS_COOLDOWN = 50
@@ -408,35 +403,6 @@ class Asteroid(GameSprite):
             self.InOrbit = False
             self.kill() 
 
-###################################################################################################
-"""
-  ██████╗ ██████╗ ██╗     ██╗     ██╗███████╗██╗ ██████╗ ███╗   ██╗
- ██╔════╝██╔═══██╗██║     ██║     ██║██╔════╝██║██╔═══██╗████╗  ██║
- ██║     ██║   ██║██║     ██║     ██║███████╗██║██║   ██║██╔██╗ ██║
- ██║     ██║   ██║██║     ██║     ██║╚════██║██║██║   ██║██║╚██╗██║
- ╚██████╗╚██████╔╝███████╗███████╗██║███████║██║╚██████╔╝██║ ╚████║
-  ╚═════╝ ╚═════╝ ╚══════╝╚══════╝╚═╝╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-                                                                   
-  ██████╗██╗  ██╗███████╗ ██████╗██╗  ██╗██╗███╗   ██╗ ██████╗     
- ██╔════╝██║  ██║██╔════╝██╔════╝██║ ██╔╝██║████╗  ██║██╔════╝     
- ██║     ███████║█████╗  ██║     █████╔╝ ██║██╔██╗ ██║██║  ███╗    
- ██║     ██╔══██║██╔══╝  ██║     ██╔═██╗ ██║██║╚██╗██║██║   ██║    
- ╚██████╗██║  ██║███████╗╚██████╗██║  ██╗██║██║ ╚████║╚██████╔╝    
-  ╚═════╝╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝     
-                                                                    
-"""
-
-def checkForOffscreenMovement(position, surface):
-    x, y = position
-    sw, sh = surface.get_size()
-
-    if x < 0 or x > sw:
-        return True
-    elif y < 0 or y > sh:
-        return True
-    else:
-        return False
-    
 ###################################################################################################
 """ 
   ██████╗  █████╗ ███╗   ███╗███████╗                                                 
@@ -655,8 +621,10 @@ while GC.Running:
         Player1_Spaceship.updateSpaceshipSpriteImage()
 
         ## Testing that the health bar decline actually works
+        ## UPDATE: it does so this logic will work for player on player combat
         # Player1_Spaceship.HEALTH -= 1
     
+    ## Doesn't slow down too much, but keeps user from spamming missiles
     if GC.MISSILE_COOLDOWN_TIME % 10 == 0:
         Player1_Spaceship.Firing = False
 

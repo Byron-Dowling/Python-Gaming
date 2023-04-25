@@ -57,3 +57,14 @@ def print_text(surface, text, font, color=Color("tomato")):
     rect.center = Vector2(surface.get_size()) / 2
 
     surface.blit(text_surface, rect)
+
+def checkForOffscreenMovement(position, surface):
+    x, y = position
+    sw, sh = surface.get_size()
+
+    if x < 0 or x > sw:
+        return True
+    elif y < 0 or y > sh:
+        return True
+    else:
+        return False
