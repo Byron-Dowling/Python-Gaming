@@ -501,6 +501,10 @@ class GameController:
 
 ## Initialize Pygame Stuff
 pygame.init()
+pygame.mixer.init()
+pygame.mixer.music.load("fire.wav")
+#set the volume so it doesnt blast anyones ear drums
+pygame.mixer.music.set_volume(.3)
 
 ## Rough Dimensions of Byron's Monitor
 screenWidth = 1750
@@ -573,6 +577,7 @@ while GC.Running:
 
     if keys[pygame.K_DOWN]:
         if Player1_Spaceship.Firing == False:
+            pygame.mixer.music.play()
             Player1_Spaceship.Firing = True
             projectile = Player1_Spaceship.fireMissile()
             GC.MissilesInAir.add(projectile)
