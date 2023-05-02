@@ -1,16 +1,13 @@
 """
     Author:   Byron Dowling, Deangelo Brown, Izzy Olaemimimo
     Class:    5443 2D Python Gaming
-
     Asset Credits:
-
         Space Environment Sprites:
             - Author: [FoozleCC]
             - https://foozlecc.itch.io/void-fleet-pack-2
             - https://foozlecc.itch.io/void-environment-pack
             - https://foozlecc.itch.io/void-main-ship 
             - https://norma-2d.itch.io/celestial-objects-pixel-art-pack
-
 """
 
 import math
@@ -21,10 +18,6 @@ from PIL import Image, ImageDraw
 from random import shuffle
 from pygame.math import Vector2
 from utilities import load_sprite, load_sprite_rotated, wrap_position, checkForOffscreenMovement
-import sys
-from messagePassing import Rabbit
-import ast  
-
 
 UP = Vector2(0, -1)
 
@@ -80,7 +73,6 @@ class Background(pygame.sprite.Sprite):
  ╚════██║██╔═══╝ ██╔══██╗██║   ██║   ██╔══╝  
  ███████║██║     ██║  ██║██║   ██║   ███████╗
  ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   ╚══════╝
-
 """
 class GameSprite(pygame.sprite.Sprite):
     def __init__(self, position, sprite, velocity):
@@ -425,7 +417,7 @@ class Asteroid(GameSprite):
                                                                                       
 """
 class GameController:
-    def __init__(self, width, height, multiplayer = None):
+    def __init__(self, width, height):
         self.Running = True
         self.screenWidth = width
         self.screenHeight = height
@@ -442,8 +434,6 @@ class GameController:
         self.FORWARD_ACCELEARATION = 25
         self.MISSILE_COOLDOWN_TIME = 0
 
-        self.__ship = Spaceship((random.randrange(100, self.screenWidth - 100), random.randrange(100, self.screenHeight - 100)))
-
         self.Locations = [(100,150),(300,300),(800,400),(1300,200),
                                    (1100,600),(700,700),(1500,620),(650,450),
                                    (1700,850),(800,800),(100,620),(150,450),
@@ -452,48 +442,12 @@ class GameController:
         self.Asteroids = []
         self.MissilesInAir = pygame.sprite.Group()
 
-        self.messenger = multiplayer
-
-        if multiplayer != None:
-            self.messenger.setCallback(self.__receiveMessage)
-
-            self.__sendMessage(
-                {'Type': 'Who'})
-
-            self.__sendMessage(
-                {'Type': 'Join',
-                'Message': self.__messenger.user + ' has joined the game!',
-                'Ship': [self.__ship.getLocation(), self.__ship.getVelocity()]})
-            
-            self.__playerIds = []
-
-        self.__otherPlayers = []
-        self.__allPlayers = [self.__ship]
-
         shuffle(self.Locations)
 
         for i in range(self.AsteroidCount):
             position = self.Locations[i]
             temp = Asteroid(position, self.Asteroid_Smoothscale)
             self.Asteroids.append(temp)
-    
-    def draw(self):
-        screen.fill((0,0,0))
-
-        StarryBackground = Background(f"Assets/Background/Stars/{self.BG_Frame}.png", [0, 0], (self.screenWidth, self.screenHeight))
-        screen.blit(StarryBackground.image, StarryBackground.rect)
-
-        RotaryStar1 = Background(f'Assets/Background/RotaryStar/{self.RS_Frame}.png', [210,500], (100,100))
-        screen.blit(RotaryStar1.image, RotaryStar1.rect)
-
-        RotaryStar2 = Background(f'Assets/Background/RotaryStar/{self.RS_Frame}.png', [1610,110], (100,100))
-        screen.blit(RotaryStar2.image, RotaryStar2.rect)
-
-        Blackhole = Background(f'Assets/Background/BH/{self.BH_Frame}.png', [815,350], (150,150))
-        screen.blit(Blackhole.image, Blackhole.rect)
-        self.drawAsteroids()
-
-            
 
     def getScreenSize(self):
         dimensions = (self.screenWidth, self.screenHeight)
@@ -523,82 +477,6 @@ class GameController:
             self.BH_Frame += 1
         else:
             self.BH_Frame = 0
-    
-
-    def __HandleEvents(self):
-        pass
-    
-    def __receiveMessage(self, ch, method, properties, body):
-        """
-        Receives messages from the server and handles them
-        
-        Parameters
-        ----------
-            ch : channel
-            method :
-            properties :
-            body : json
-        """
-        #print(body)
-        #converts bytes to dictionary
-        bodyDic = ast.literal_eval(body.decode('utf-8'))
-        #print(bodyDic)
-
-        #if a player joins and they aren't yourself (broadcast also sends to self) and they aren't already in the game
-        if bodyDic['Type'] == 'Join' and bodyDic['from'] != self.__messenger.user and bodyDic['from'] not in self.__playerIds:
-            print('\n' + str(bodyDic['Message']))
-            
-            self.__otherPlayers.append(Spaceship(bodyDic['Ship'][0], len(self.__otherPlayers)+1, bodyDic['Ship'][1]))
-            self.__allPlayers.append(Spaceship(bodyDic['Ship'][0], len(self.__otherPlayers)+1, bodyDic['Ship'][1]))
-            
-
-            self.__playerIds.append(bodyDic['from'])
-            #print(bodyDic['from'])
-            #self.__scores.addPlayer(bodyDic['from'], self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].getColor())
-
-        #if someone joins the game and requests what users are already in the game
-        elif bodyDic['Type'] == 'Who' and bodyDic['from'] != self.__messenger.user:
-            if len(self.__playerIds) == 0 and self.__host == False:
-                self.__host = True
-                self.__asteroids = [Asteroid(self.__screen, 3), Asteroid(self.__screen, 3)]
-
-            self.__sendMessage({'Type': 'Join',
-                                'Message': self.__messenger.user + ' is in the game!',
-                                'Ship': [self.__ship.getLocation(), self.__ship.getVelocity()]})
-            
-            if self.__host:
-                toSend = []
-
-                for roid in self.__asteroids:
-                    toSend.append([roid.getSize(), roid.getLocation(), roid.getVelocity()])
-
-                self.__sendMessage({'Type': 'Asteroids',
-                                    'Info': toSend})
-        elif bodyDic['Type'] == 'Event' and bodyDic['from'] != self.__messenger.user and bodyDic['from'] in self.__playerIds:
-            for dics in bodyDic['Events']:
-                #if player accelerates accelerate the given ship 
-                if dics['Type'] == 'Accelerate':
-                    self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].accelerate()
-                if dics['Type'] == 'Rotate':
-                    self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].rotate(clockwise=bool(dics['Clockwise']))
-                if dics['Type'] == 'Shoot':
-                    self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].Shoot()
-                if dics['Type'] == 'Stop':
-                    self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].Stop()
-        elif bodyDic['Type'] == 'Asteroids' and bodyDic['from'] != self.__messenger.user and self.__asteroids == []:
-            for info in bodyDic['Info']:
-                self.__asteroids.append(Asteroid(self.__screen, info[0], info[1], info[2]))
-            
-            
-    def __sendMessage(self, bodyDic):
-        """
-        Sends a message to the server
-        
-        Parameters
-        ----------
-            bodyDic : dictionary
-        """
-        self.__messenger.send("broadcast", bodyDic)
         
 ###################################################################################################
 """
@@ -621,8 +499,8 @@ class GameController:
 pygame.init()
 
 ## Rough Dimensions of Byron's Monitor
-screenWidth = 800
-screenHeight = 600
+screenWidth = 1750
+screenHeight = 900
 
 GC = GameController(screenWidth, screenHeight)
 screen = pygame.display.set_mode((GC.screenWidth, GC.screenHeight))
@@ -630,7 +508,6 @@ screen = pygame.display.set_mode((GC.screenWidth, GC.screenHeight))
 tick = 0
 
 Player1_Spaceship = Spaceship((85,85))
-
 
 ###################################################################################################
 """
@@ -641,28 +518,6 @@ Player1_Spaceship = Spaceship((85,85))
  ╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗    ███████╗╚██████╔╝╚██████╔╝██║     
   ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝    ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝                                                                             
 """
-
-
-"""
-python ex_05.py game1 player-1 'player-12023!!!!!'
-"""
-if len(sys.argv) < 3:
-    print("Need: exchange and player ")
-    print("Example: python ex05.py game-01 player-02")
-    sys.exit()
-
-game = sys.argv[1]
-#print(game)
-player = sys.argv[2]
-creds = {
-    "exchange": game,
-    "port": "5672",
-    "host": "terrywgriffin.com",
-    "user": player,
-    "password": player + "2023!!!!!",
-}
-
-multiplayer = Rabbit(creds)
 ## Run the game loop
 while GC.Running:
     for event in pygame.event.get():
