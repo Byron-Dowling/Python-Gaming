@@ -441,8 +441,14 @@ class GameController:
         self.Spaceship_Smoothscale = (80,80)
         self.FORWARD_ACCELEARATION = 25
         self.MISSILE_COOLDOWN_TIME = 0
+        self.__running = True
+        self.__host = False
+        self.tick = 0
 
-        self.__ship = Spaceship((random.randrange(100, self.screenWidth - 100), random.randrange(100, self.screenHeight - 100)))
+        self.__clock = pygame.time.Clock()
+        self.__fps = 30
+
+        self.__ship = Spaceship((85, 85))
 
         self.Locations = [(100,150),(300,300),(800,400),(1300,200),
                                    (1100,600),(700,700),(1500,620),(650,450),
@@ -462,8 +468,9 @@ class GameController:
 
             self.__sendMessage(
                 {'Type': 'Join',
-                'Message': self.__messenger.user + ' has joined the game!',
-                'Ship': [self.__ship.getLocation(), self.__ship.getVelocity()]})
+                'Message': self.messenger.user + ' has joined the game!',
+                'Ship': self.__ship.updateSpaceshipLocation()
+                })
             
             self.__playerIds = []
 
@@ -476,6 +483,22 @@ class GameController:
             position = self.Locations[i]
             temp = Asteroid(position, self.Asteroid_Smoothscale)
             self.Asteroids.append(temp)
+
+    
+    def GameLoop(self):
+        """
+        The main game loop
+        """
+        while self.__running:
+            #self.__CheckCollisions()
+            
+            self.draw()
+
+            self.__HandleEvents()
+
+            self.__delta = self.__clock.tick(self.__fps) / self.__fps
+
+            #self.__delta = self.__clock.tick(self.__fps) / self.__fps
     
     def draw(self):
         screen.fill((0,0,0))
@@ -492,6 +515,23 @@ class GameController:
         Blackhole = Background(f'Assets/Background/BH/{self.BH_Frame}.png', [815,350], (150,150))
         screen.blit(Blackhole.image, Blackhole.rect)
         self.drawAsteroids()
+
+        for player in self.__otherPlayers:
+            player.draw(self.screen)
+
+        self.__ship.draw(self.screen)
+        self.__ship.updateFrames()
+        self.__ship.updateSpaceshipSpriteImage()
+        #self.__ship.updateSpaceshipLocation() 
+        self.__ship.fireMissile()
+        self.__ship.drawHealthBar(self.screen)
+        self.__ship.drawShieldBar(self.screen)
+        self.updateFrames()
+
+        
+
+        
+        pygame.display.update()
 
             
 
@@ -523,10 +563,122 @@ class GameController:
             self.BH_Frame += 1
         else:
             self.BH_Frame = 0
+
     
 
     def __HandleEvents(self):
-        pass
+        """ 
+        Handles the keyboard imput and message passing for multiple players
+        """
+        sendMessage = False
+        Message = {
+            'Type': 'Event',
+            'Events' : []
+        }
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.__running = False
+
+
+            #keys = pygame.key.get_pressed()
+            if event.type == pygame.KEYDOWN:  
+                if event.key == pygame.K_LEFT:
+                    self.__ship.rotate(clockwise=True)
+                    sendMessage = True
+                    Message['Events'].append({'Type': 'Rotate',
+                                    'Clockwise': 1})
+                elif event.key == pygame.K_RIGHT:
+                    self.__ship.rotate(clockwise=False)
+                    sendMessage = True
+                    Message['Events'].append({'Type': 'Rotate',
+                                    'Clockwise': 0})
+                if event.key == pygame.K_RSHIFT:
+                    if self.__ship.SpaceshipShields.COOLING_DOWN == False:
+                        self.__ship.Shields=True
+                        self.__ship.SpaceshipShields.updateFrames()
+                        self.__ship.updateSpaceshipLocation()
+                        sendMessage = True
+                        Message['Events'].append({'Type': 'Sheilds'})
+                if event.key == pygame.K_UP:
+                    self.__ship.accelerate()
+                    self.__ship.move(self.screen)
+                    self.__ship.updateSpaceshipSpriteImage()
+                    self.__ship.updateSpaceshipLocation()
+                    sendMessage = True
+                    Message['Events'].append({'Type': 'Accelerate'})
+                
+                if event.key == pygame.K_DOWN:
+                    if self.__ship.Firing == False:
+                        pygame.mixer.music.play()
+                        self.__ship.Firing = True
+                        projectile = self.__ship.fireMissile()
+                        self.MissilesInAir.add(projectile)
+                        sendMessage = True
+                        Message['Events'].append({'Type': 'Shoot'})
+            
+            if self.__ship.Firing == True:
+                self.__ship.updateSpaceshipLocation()
+
+            ## Looping through Missiles and checking for Asteroid Collisions    
+            for missile in self.MissilesInAir:
+                missile.accelerate()
+                result = checkForOffscreenMovement(missile.position, self.screen)
+
+                if result == False:
+                    missile.move(self.screen, True)
+                    missile.draw(self.screen)
+                    missile.updateFrames()
+
+                    for asteroid in self.Asteroids:
+                        resultCollision = missile.collides_with(asteroid)
+
+                        if resultCollision == True:
+                            print("A missile collided with an asteroid!")
+                            asteroid.Exploding = True
+                            missile.explode()
+                else:
+                    missile.explode()
+                    self.MissilesInAir.remove(missile)
+
+            ## Looping through Asteroids and playing explosion animations if collision recorded
+            for asteroid in self.Asteroids:
+                if asteroid.InOrbit:
+                    if asteroid.Exploding:
+                        asteroid.destroy()
+                else:
+                    self.Asteroids.remove(asteroid)
+
+            
+            if self.tick % 3 == 0:
+                self.updateFrames()
+                self.__ship.updateFrames()
+                self.__ship.updateSpaceshipSpriteImage()
+
+                ## Testing that the health bar decline actually works
+                ## UPDATE: it does so this logic will work for player on player combat
+                # Player1_Spaceship.HEALTH -= 1
+            
+            ## Doesn't slow down too much, but keeps user from spamming missiles
+            if self.MISSILE_COOLDOWN_TIME % 10 == 0:
+                self.__ship.Firing = False
+
+
+            ## Dealing with Shields and Stuff
+            self.__ship.SpaceshipShields.updateShields(self.__ship.Shields)
+
+            if self.__ship.Shields == True:
+                self.__ship.SpaceshipShields.draw(self.screen)
+
+            self.tick += 1
+            self.MISSILE_COOLDOWN_TIME += 1
+            self.__ship.Shields=False
+
+            
+        
+
+        if sendMessage == True:
+            self.__sendMessage(Message)
     
     def __receiveMessage(self, ch, method, properties, body):
         """
@@ -539,17 +691,17 @@ class GameController:
             properties :
             body : json
         """
-        #print(body)
+        print(body)
         #converts bytes to dictionary
         bodyDic = ast.literal_eval(body.decode('utf-8'))
         #print(bodyDic)
 
         #if a player joins and they aren't yourself (broadcast also sends to self) and they aren't already in the game
-        if bodyDic['Type'] == 'Join' and bodyDic['from'] != self.__messenger.user and bodyDic['from'] not in self.__playerIds:
+        if bodyDic['Type'] == 'Join' and bodyDic['from'] != self.messenger.user and bodyDic['from'] not in self.__playerIds:
             print('\n' + str(bodyDic['Message']))
             
-            self.__otherPlayers.append(Spaceship(bodyDic['Ship'][0], len(self.__otherPlayers)+1, bodyDic['Ship'][1]))
-            self.__allPlayers.append(Spaceship(bodyDic['Ship'][0], len(self.__otherPlayers)+1, bodyDic['Ship'][1]))
+            self.__otherPlayers.append(Spaceship(bodyDic['Ship']))
+            self.__allPlayers.append(Spaceship(bodyDic['Ship']))
             
 
             self.__playerIds.append(bodyDic['from'])
@@ -557,24 +709,24 @@ class GameController:
             #self.__scores.addPlayer(bodyDic['from'], self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].getColor())
 
         #if someone joins the game and requests what users are already in the game
-        elif bodyDic['Type'] == 'Who' and bodyDic['from'] != self.__messenger.user:
+        elif bodyDic['Type'] == 'Who' and bodyDic['from'] != self.messenger.user:
             if len(self.__playerIds) == 0 and self.__host == False:
                 self.__host = True
-                self.__asteroids = [Asteroid(self.__screen, 3), Asteroid(self.__screen, 3)]
+                #self.__asteroids = [Asteroid(self.__screen, 3), Asteroid(self.__screen, 3)]
 
             self.__sendMessage({'Type': 'Join',
-                                'Message': self.__messenger.user + ' is in the game!',
-                                'Ship': [self.__ship.getLocation(), self.__ship.getVelocity()]})
+                                'Message': self.messenger.user + ' is in the game!',
+                                'Ship': self.__ship.randomLocationSpawn()})
             
-            if self.__host:
-                toSend = []
+            # if self.__host:
+            #     toSend = []
 
-                for roid in self.__asteroids:
-                    toSend.append([roid.getSize(), roid.getLocation(), roid.getVelocity()])
+            #     for roid in self.__asteroids:
+            #         toSend.append([roid.getSize(), roid.getLocation(), roid.getVelocity()])
 
-                self.__sendMessage({'Type': 'Asteroids',
-                                    'Info': toSend})
-        elif bodyDic['Type'] == 'Event' and bodyDic['from'] != self.__messenger.user and bodyDic['from'] in self.__playerIds:
+            #     self.__sendMessage({'Type': 'Asteroids',
+            #                         'Info': toSend})
+        elif bodyDic['Type'] == 'Event' and bodyDic['from'] != self.messenger.user and bodyDic['from'] in self.__playerIds:
             for dics in bodyDic['Events']:
                 #if player accelerates accelerate the given ship 
                 if dics['Type'] == 'Accelerate':
@@ -582,12 +734,12 @@ class GameController:
                 if dics['Type'] == 'Rotate':
                     self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].rotate(clockwise=bool(dics['Clockwise']))
                 if dics['Type'] == 'Shoot':
-                    self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].Shoot()
-                if dics['Type'] == 'Stop':
-                    self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].Stop()
-        elif bodyDic['Type'] == 'Asteroids' and bodyDic['from'] != self.__messenger.user and self.__asteroids == []:
-            for info in bodyDic['Info']:
-                self.__asteroids.append(Asteroid(self.__screen, info[0], info[1], info[2]))
+                    self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].fireMissile()
+                # if dics['Type'] == 'Stop':
+                #     self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].Stop()
+        # elif bodyDic['Type'] == 'Asteroids' and bodyDic['from'] != self.messenger.user and self.__asteroids == []:
+        #     for info in bodyDic['Info']:
+        #         self.__asteroids.append(Asteroid(self.__screen, info[0], info[1], info[2]))
             
             
     def __sendMessage(self, bodyDic):
@@ -598,7 +750,7 @@ class GameController:
         ----------
             bodyDic : dictionary
         """
-        self.__messenger.send("broadcast", bodyDic)
+        self.messenger.send("broadcast", bodyDic)
         
 ###################################################################################################
 """
@@ -625,26 +777,8 @@ pygame.mixer.music.load("fire.wav")
 pygame.mixer.music.set_volume(.3)
 
 ## Rough Dimensions of Byron's Monitor
-screenWidth = 800
-screenHeight = 600
-
-GC = GameController(screenWidth, screenHeight)
-screen = pygame.display.set_mode((GC.screenWidth, GC.screenHeight))
-
-tick = 0
-
-Player1_Spaceship = Spaceship((85,85))
-
-
-###################################################################################################
-"""
-  ██████╗  █████╗ ███╗   ███╗███████╗    ██╗      ██████╗  ██████╗ ██████╗ 
- ██╔════╝ ██╔══██╗████╗ ████║██╔════╝    ██║     ██╔═══██╗██╔═══██╗██╔══██╗
- ██║  ███╗███████║██╔████╔██║█████╗      ██║     ██║   ██║██║   ██║██████╔╝
- ██║   ██║██╔══██║██║╚██╔╝██║██╔══╝      ██║     ██║   ██║██║   ██║██╔═══╝ 
- ╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗    ███████╗╚██████╔╝╚██████╔╝██║     
-  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝    ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝                                                                             
-"""
+screenWidth = 1500
+screenHeight = 800
 
 
 """
@@ -667,124 +801,146 @@ creds = {
 }
 
 multiplayer = Rabbit(creds)
+
+GC = GameController(screenWidth, screenHeight, multiplayer = multiplayer)
+screen = pygame.display.set_mode((GC.screenWidth, GC.screenHeight))
+
+GC.GameLoop()
+
+
+
+#Player1_Spaceship = Spaceship((85,85))
+
+
+###################################################################################################
+"""
+  ██████╗  █████╗ ███╗   ███╗███████╗    ██╗      ██████╗  ██████╗ ██████╗ 
+ ██╔════╝ ██╔══██╗████╗ ████║██╔════╝    ██║     ██╔═══██╗██╔═══██╗██╔══██╗
+ ██║  ███╗███████║██╔████╔██║█████╗      ██║     ██║   ██║██║   ██║██████╔╝
+ ██║   ██║██╔══██║██║╚██╔╝██║██╔══╝      ██║     ██║   ██║██║   ██║██╔═══╝ 
+ ╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗    ███████╗╚██████╔╝╚██████╔╝██║     
+  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝    ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝                                                                             
+"""
+
+
 ## Run the game loop
-while GC.Running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            GC.Running = False
+# while GC.Running:
+#     for event in pygame.event.get():
+#         if event.type == pygame.QUIT:
+#             GC.Running = False
 
-    """
-        Background Layering
-    """
-    screen.fill((0,0,0))
+#     """
+#         Background Layering
+#     """
+#     screen.fill((0,0,0))
 
-    StarryBackground = Background(f"Assets/Background/Stars/{GC.BG_Frame}.png", [0, 0], (screenWidth, screenHeight))
-    GC.screen.blit(StarryBackground.image, StarryBackground.rect)
+#     StarryBackground = Background(f"Assets/Background/Stars/{GC.BG_Frame}.png", [0, 0], (screenWidth, screenHeight))
+#     GC.screen.blit(StarryBackground.image, StarryBackground.rect)
 
-    RotaryStar1 = Background(f'Assets/Background/RotaryStar/{GC.RS_Frame}.png', [210,500], (100,100))
-    GC.screen.blit(RotaryStar1.image, RotaryStar1.rect)
+#     RotaryStar1 = Background(f'Assets/Background/RotaryStar/{GC.RS_Frame}.png', [210,500], (100,100))
+#     GC.screen.blit(RotaryStar1.image, RotaryStar1.rect)
 
-    RotaryStar2 = Background(f'Assets/Background/RotaryStar/{GC.RS_Frame}.png', [1610,110], (100,100))
-    GC.screen.blit(RotaryStar2.image, RotaryStar2.rect)
+#     RotaryStar2 = Background(f'Assets/Background/RotaryStar/{GC.RS_Frame}.png', [1610,110], (100,100))
+#     GC.screen.blit(RotaryStar2.image, RotaryStar2.rect)
 
-    Blackhole = Background(f'Assets/Background/BH/{GC.BH_Frame}.png', [815,350], (150,150))
-    GC.screen.blit(Blackhole.image, Blackhole.rect)
-    GC.drawAsteroids()
+#     Blackhole = Background(f'Assets/Background/BH/{GC.BH_Frame}.png', [815,350], (150,150))
+#     GC.screen.blit(Blackhole.image, Blackhole.rect)
+#     GC.drawAsteroids()
 
-    Player1_Spaceship.draw(screen)
-    Player1_Spaceship.drawHealthBar(screen)
-    Player1_Spaceship.drawShieldBar(screen)
-
-
-    """
-        Key Input / Fire Controls / Ship Movement
-    """
-
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
-        Player1_Spaceship.rotate(clockwise=True)
-    if keys[pygame.K_RIGHT]:
-        Player1_Spaceship.rotate(clockwise=False)
-    if keys[pygame.K_RSHIFT]:
-        if Player1_Spaceship.SpaceshipShields.COOLING_DOWN == False:
-            Player1_Spaceship.Shields=True
-            Player1_Spaceship.SpaceshipShields.updateFrames()
-            Player1_Spaceship.updateSpaceshipLocation()
-    if keys[pygame.K_UP]:
-        Player1_Spaceship.accelerate()
-        Player1_Spaceship.move(screen)
-        Player1_Spaceship.updateSpaceshipSpriteImage()
-        Player1_Spaceship.updateSpaceshipLocation()
-
-    if keys[pygame.K_DOWN]:
-        if Player1_Spaceship.Firing == False:
-            pygame.mixer.music.play()
-            Player1_Spaceship.Firing = True
-            projectile = Player1_Spaceship.fireMissile()
-            GC.MissilesInAir.add(projectile)
+#     Player1_Spaceship.draw(screen)
+#     Player1_Spaceship.drawHealthBar(screen)
+#     Player1_Spaceship.drawShieldBar(screen)
 
 
-    """
-        Handling Game Logic
-    """
+#     """
+#         Key Input / Fire Controls / Ship Movement
+#     """
 
-    if Player1_Spaceship.Firing == True:
-        Player1_Spaceship.updateSpaceshipLocation()
+#     keys = pygame.key.get_pressed()
+#     if keys[pygame.K_LEFT]:
+#         Player1_Spaceship.rotate(clockwise=True)
+#     if keys[pygame.K_RIGHT]:
+#         Player1_Spaceship.rotate(clockwise=False)
+#     if keys[pygame.K_RSHIFT]:
+#         if Player1_Spaceship.SpaceshipShields.COOLING_DOWN == False:
+#             Player1_Spaceship.Shields=True
+#             Player1_Spaceship.SpaceshipShields.updateFrames()
+#             Player1_Spaceship.updateSpaceshipLocation()
+#     if keys[pygame.K_UP]:
+#         Player1_Spaceship.accelerate()
+#         Player1_Spaceship.move(screen)
+#         Player1_Spaceship.updateSpaceshipSpriteImage()
+#         Player1_Spaceship.updateSpaceshipLocation()
 
-    ## Looping through Missiles and checking for Asteroid Collisions    
-    for missile in GC.MissilesInAir:
-        missile.accelerate()
-        result = checkForOffscreenMovement(missile.position, GC.screen)
+#     if keys[pygame.K_DOWN]:
+#         if Player1_Spaceship.Firing == False:
+#             pygame.mixer.music.play()
+#             Player1_Spaceship.Firing = True
+#             projectile = Player1_Spaceship.fireMissile()
+#             GC.MissilesInAir.add(projectile)
 
-        if result == False:
-            missile.move(GC.screen, True)
-            missile.draw(GC.screen)
-            missile.updateFrames()
 
-            for asteroid in GC.Asteroids:
-                resultCollision = missile.collides_with(asteroid)
+#     """
+#         Handling Game Logic
+#     """
 
-                if resultCollision == True:
-                    print("A missile collided with an asteroid!")
-                    asteroid.Exploding = True
-                    missile.explode()
-        else:
-            missile.explode()
-            GC.MissilesInAir.remove(missile)
+#     if Player1_Spaceship.Firing == True:
+#         Player1_Spaceship.updateSpaceshipLocation()
 
-    ## Looping through Asteroids and playing explosion animations if collision recorded
-    for asteroid in GC.Asteroids:
-        if asteroid.InOrbit:
-            if asteroid.Exploding:
-                asteroid.destroy()
-        else:
-            GC.Asteroids.remove(asteroid)
+#     ## Looping through Missiles and checking for Asteroid Collisions    
+#     for missile in GC.MissilesInAir:
+#         missile.accelerate()
+#         result = checkForOffscreenMovement(missile.position, GC.screen)
+
+#         if result == False:
+#             missile.move(GC.screen, True)
+#             missile.draw(GC.screen)
+#             missile.updateFrames()
+
+#             for asteroid in GC.Asteroids:
+#                 resultCollision = missile.collides_with(asteroid)
+
+#                 if resultCollision == True:
+#                     print("A missile collided with an asteroid!")
+#                     asteroid.Exploding = True
+#                     missile.explode()
+#         else:
+#             missile.explode()
+#             GC.MissilesInAir.remove(missile)
+
+#     ## Looping through Asteroids and playing explosion animations if collision recorded
+#     for asteroid in GC.Asteroids:
+#         if asteroid.InOrbit:
+#             if asteroid.Exploding:
+#                 asteroid.destroy()
+#         else:
+#             GC.Asteroids.remove(asteroid)
 
     
-    if tick % 3 == 0:
-        GC.updateFrames()
-        Player1_Spaceship.updateFrames()
-        Player1_Spaceship.updateSpaceshipSpriteImage()
+#     if tick % 3 == 0:
+#         GC.updateFrames()
+#         Player1_Spaceship.updateFrames()
+#         Player1_Spaceship.updateSpaceshipSpriteImage()
 
-        ## Testing that the health bar decline actually works
-        ## UPDATE: it does so this logic will work for player on player combat
-        # Player1_Spaceship.HEALTH -= 1
+#         ## Testing that the health bar decline actually works
+#         ## UPDATE: it does so this logic will work for player on player combat
+#         Player1_Spaceship.HEALTH -= 1
     
-    ## Doesn't slow down too much, but keeps user from spamming missiles
-    if GC.MISSILE_COOLDOWN_TIME % 10 == 0:
-        Player1_Spaceship.Firing = False
+#     ## Doesn't slow down too much, but keeps user from spamming missiles
+#     if GC.MISSILE_COOLDOWN_TIME % 10 == 0:
+#         Player1_Spaceship.Firing = False
 
 
-    ## Dealing with Shields and Stuff
-    Player1_Spaceship.SpaceshipShields.updateShields(Player1_Spaceship.Shields)
+#     ## Dealing with Shields and Stuff
+#     Player1_Spaceship.SpaceshipShields.updateShields(Player1_Spaceship.Shields)
 
-    if Player1_Spaceship.Shields == True:
-        Player1_Spaceship.SpaceshipShields.draw(screen)
+#     if Player1_Spaceship.Shields == True:
+#         Player1_Spaceship.SpaceshipShields.draw(screen)
 
-    tick += 1
-    GC.MISSILE_COOLDOWN_TIME += 1
-    Player1_Spaceship.Shields=False
+#     tick += 1
+#     GC.MISSILE_COOLDOWN_TIME += 1
+#     Player1_Spaceship.Shields=False
 
-    pygame.display.flip()
+#     pygame.display.flip()
 
 ###################################################################################################
