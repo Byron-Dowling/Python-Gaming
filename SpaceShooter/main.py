@@ -469,7 +469,7 @@ class GameController:
             self.__sendMessage(
                 {'Type': 'Join',
                 'Message': self.messenger.user + ' has joined the game!',
-                'Ship': self.__ship.updateSpaceshipLocation()
+                'Ship': self.__ship.currentPosition
                 })
             
             self.__playerIds = []
@@ -523,7 +523,7 @@ class GameController:
         self.__ship.updateFrames()
         self.__ship.updateSpaceshipSpriteImage()
         #self.__ship.updateSpaceshipLocation() 
-        self.__ship.fireMissile()
+       # self.__ship.fireMissile()
         self.__ship.drawHealthBar(self.screen)
         self.__ship.drawShieldBar(self.screen)
         self.updateFrames()
@@ -700,8 +700,8 @@ class GameController:
         if bodyDic['Type'] == 'Join' and bodyDic['from'] != self.messenger.user and bodyDic['from'] not in self.__playerIds:
             print('\n' + str(bodyDic['Message']))
             
-            self.__otherPlayers.append(Spaceship(bodyDic['Ship']))
-            self.__allPlayers.append(Spaceship(bodyDic['Ship']))
+            self.__otherPlayers.append(Spaceship(bodyDic['Ship'][0], len(self.__otherPlayers)+1, bodyDic['Ship'][1]))
+            self.__allPlayers.append(Spaceship(bodyDic['Ship'][0], len(self.__otherPlayers)+1, bodyDic['Ship'][1]))
             
 
             self.__playerIds.append(bodyDic['from'])
@@ -716,7 +716,7 @@ class GameController:
 
             self.__sendMessage({'Type': 'Join',
                                 'Message': self.messenger.user + ' is in the game!',
-                                'Ship': self.__ship.randomLocationSpawn()})
+                                'Ship': self.__ship.currentPosition})
             
             # if self.__host:
             #     toSend = []
