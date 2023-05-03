@@ -77,6 +77,8 @@ class Background(pygame.sprite.Sprite):
  ███████║██║     ██║  ██║██║   ██║   ███████╗
  ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   ╚══════╝
 
+ GameSprite.__init__(self, self.currentPosition, self.spriteObject, Vector2(0))
+
 """
 class GameSprite(pygame.sprite.Sprite):
     def __init__(self, position, sprite, velocity):
@@ -216,7 +218,7 @@ class Shields(GameSprite):
                                                                     
 """
 class Spaceship(GameSprite):
-    def __init__(self, smsc):
+    def __init__(self, smsc=(85,85)):
         self.Idle = True
         self.Thrust = False
         self.Shields = False
@@ -507,7 +509,8 @@ pygame.mixer.music.load("fire.wav")
 pygame.mixer.music.set_volume(.3)
 
 ## Rough Dimensions of Byron's Monitor
-screenWidth = 1750
+# screenWidth = 1750
+screenWidth = 1500
 screenHeight = 900
 
 GC = GameController(screenWidth, screenHeight)
