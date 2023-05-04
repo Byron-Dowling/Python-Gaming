@@ -231,8 +231,9 @@ class Spaceship(GameSprite):
         self.BLUE = (0,0,255)
         self.HEALTH = 10
         self.MANEUVERABILITY = 5
-        self.ACCELERATION = 0.50
-        self.MAX_VELOCITY = 30
+        self.ACCELERATION = 0.30
+        self.MAX_VELOCITY = 20
+        self.BRAKE_VELOCITY = 6
         self.ANGLE = 0
         self.direction = Vector2(UP)
         self.Idle_Frames = len(os.listdir("Assets\Sprites\Spaceships\Idle"))
@@ -274,7 +275,7 @@ class Spaceship(GameSprite):
         self.direction[1] = abs(self.direction[1])
         self.getUnitCircleQuadrant()
 
-        self.velocity = self.direction * self.ACCELERATION
+        self.velocity += self.direction * self.ACCELERATION
 
         if clockwise:
             self.spriteObject = load_sprite_rotated(self.ImageLink, 
@@ -340,6 +341,11 @@ class Spaceship(GameSprite):
         self.updateSpaceshipLocation()
         SpaceshipMissile = Missiles(self.currentPosition, self.direction, self.ANGLE)
         return SpaceshipMissile
+    
+    def brake(self):
+        if self.velocity.length() > 0:
+            self.velocity -= self.direction * self.BRAKE_VELOCITY
+            self.Thrust = False
 
 ###################################################################################################
 """
@@ -460,7 +466,7 @@ class GameController:
         return dimensions
     
     def drawAsteroids(self):
-        if len(self.Asteroids) < 6:
+        if len(self.Asteroids) < 8:
             shuffle(self.Locations)
             for i in range(len(self.Asteroids)):
                 position = self.Locations[i]
@@ -509,8 +515,8 @@ pygame.mixer.music.load("fire.wav")
 pygame.mixer.music.set_volume(.3)
 
 ## Rough Dimensions of Byron's Monitor
-# screenWidth = 1750
-screenWidth = 1500
+screenWidth = 1750
+#screenWidth = 1500
 screenHeight = 900
 
 GC = GameController(screenWidth, screenHeight)
@@ -531,9 +537,6 @@ Player1_Spaceship = Spaceship((85,85))
 """
 ## Run the game loop
 while GC.Running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            GC.Running = False
 
     """
         Background Layering
@@ -562,35 +565,55 @@ while GC.Running:
         Key Input / Fire Controls / Ship Movement
     """
 
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
-        Player1_Spaceship.rotate(clockwise=True)
-    if keys[pygame.K_RIGHT]:
-        Player1_Spaceship.rotate(clockwise=False)
-    if keys[pygame.K_RSHIFT]:
-        if Player1_Spaceship.SpaceshipShields.COOLING_DOWN == False:
-            Player1_Spaceship.Shields=True
-            Player1_Spaceship.SpaceshipShields.updateFrames()
-            Player1_Spaceship.updateSpaceshipLocation()
-    if keys[pygame.K_UP]:
-        Player1_Spaceship.accelerate()
-        Player1_Spaceship.move(screen)
-        Player1_Spaceship.updateSpaceshipSpriteImage()
-        Player1_Spaceship.updateSpaceshipLocation()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            GC.Running = False
 
-    if keys[pygame.K_DOWN]:
-        if Player1_Spaceship.Firing == False:
-            pygame.mixer.music.play()
-            Player1_Spaceship.Firing = True
-            projectile = Player1_Spaceship.fireMissile()
-            GC.MissilesInAir.add(projectile)
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                if Player1_Spaceship.Firing == False:
+                    pygame.mixer.music.play()
+                    Player1_Spaceship.Firing = True
+                    projectile = Player1_Spaceship.fireMissile()
+                    GC.MissilesInAir.add(projectile)
+            elif event.key == pygame.K_LEFT:
+                Player1_Spaceship.RotateLeft = True
+            elif event.key == pygame.K_RIGHT:
+                Player1_Spaceship.RotateRight = True
+            elif event.key == pygame.K_UP:
+                Player1_Spaceship.Thrust = True
+            elif event.key == pygame.K_DOWN:
+                Player1_Spaceship.brake()
+            elif event.key == pygame.K_RSHIFT:
+                if Player1_Spaceship.SpaceshipShields.COOLING_DOWN == False:
+                    Player1_Spaceship.Shields=True
+
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_LEFT:
+                Player1_Spaceship.RotateLeft = False
+            elif event.key == pygame.K_RIGHT:
+                Player1_Spaceship.RotateRight = False
+            elif event.key == pygame.K_RSHIFT:
+                Player1_Spaceship.Shields = False
 
 
     """
         Handling Game Logic
     """
 
-    if Player1_Spaceship.Firing == True:
+    if Player1_Spaceship.Thrust:
+        Player1_Spaceship.accelerate()
+        Player1_Spaceship.move(screen)
+        Player1_Spaceship.updateSpaceshipSpriteImage()
+        Player1_Spaceship.updateSpaceshipLocation()
+
+    if Player1_Spaceship.RotateLeft:
+        Player1_Spaceship.rotate(clockwise=True)
+
+    if Player1_Spaceship.RotateRight:
+        Player1_Spaceship.rotate(clockwise=False)
+
+    if Player1_Spaceship.Firing:
         Player1_Spaceship.updateSpaceshipLocation()
 
     ## Looping through Missiles and checking for Asteroid Collisions    
@@ -642,10 +665,11 @@ while GC.Running:
 
     if Player1_Spaceship.Shields == True:
         Player1_Spaceship.SpaceshipShields.draw(screen)
+        Player1_Spaceship.SpaceshipShields.updateFrames()
+        Player1_Spaceship.updateSpaceshipLocation()
 
     tick += 1
     GC.MISSILE_COOLDOWN_TIME += 1
-    Player1_Spaceship.Shields=False
 
     pygame.display.flip()
 
