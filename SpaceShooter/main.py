@@ -568,7 +568,15 @@ class GameController:
 
     def __HandleEvents(self):
         """ 
-        Handles the keyboard imput and message passing for multiple players
+            Handles the keyboard imput and message passing for multiple players
+
+            Ideas:
+                - Pass message on all key-down events such as when finished rotating
+                  and when using the brake
+                  
+                - Pass message when accelerating if no message has been passed within
+                  a certain time threshold such as longer than 10 "ticks"
+
         """
         sendMessage = False
         Message = {
