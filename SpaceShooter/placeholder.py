@@ -232,7 +232,7 @@ class Spaceship(GameSprite):
         self.HEALTH = 10
         self.MANEUVERABILITY = 5
         self.ACCELERATION = 0.30
-        self.MAX_VELOCITY = 20
+        self.MAX_VELOCITY = 18
         self.BRAKE_VELOCITY = 6
         self.ANGLE = 0
         self.direction = Vector2(UP)
