@@ -24,6 +24,7 @@ from utilities import load_sprite, load_sprite_rotated, wrap_position, checkForO
 import sys
 from messagePassing import Rabbit
 import ast  
+import json
 
 
 UP = Vector2(0, -1)
@@ -220,7 +221,7 @@ class Shields(GameSprite):
                                                                     
 """
 class Spaceship(GameSprite):
-    def __init__(self, smsc = (85,85)):
+    def __init__(self, smsc):
         self.Idle = True
         self.Thrust = False
         self.Shields = False
@@ -449,11 +450,7 @@ class GameController:
         self.__clock = pygame.time.Clock()
         self.__fps = 30
 
-        self.__ship = Spaceship()
-        
-
-        #Need to update parent class position with message passed positions 
-        self.__ship = self.__ship.position[0], self.__ship.position[1]
+        self.__ship = Spaceship((85, 85))
 
         self.Locations = [(100,150),(300,300),(800,400),(1300,200),
                                    (1100,600),(700,700),(1500,620),(650,450),
@@ -474,8 +471,7 @@ class GameController:
             self.__sendMessage(
                 {'Type': 'Join',
                 'Message': self.messenger.user + ' has joined the game!',
-                'Player_x': int(self.__ship.position[0]),
-                'Player_y': int(self.__ship.position[1])
+                'Ship': [self.__ship.currentPosition]
                 })
             
             self.__playerIds = []
@@ -540,7 +536,7 @@ class GameController:
         
 
         
-        pygame.display.update()
+        pygame.display.flip()
 
             
 
@@ -594,13 +590,11 @@ class GameController:
         
             if keys[pygame.K_LEFT]:
                 self.__ship.rotate(clockwise=True)
-                #self.__ship.draw(self.screen)
                 sendMessage = True
                 Message['Events'].append({'Type': 'Rotate',
                                 'Clockwise': 1})
             if keys[pygame.K_RIGHT]:
                 self.__ship.rotate(clockwise=False)
-                self.__ship.draw(self.screen)
                 sendMessage = True
                 Message['Events'].append({'Type': 'Rotate',
                                 'Clockwise': 0})
@@ -609,7 +603,6 @@ class GameController:
                     self.__ship.Shields=True
                     self.__ship.SpaceshipShields.updateFrames()
                     self.__ship.updateSpaceshipLocation()
-                    #self.__ship.draw(self.screen)
                     sendMessage = True
                     Message['Events'].append({'Type': 'Sheilds'})
             if keys[pygame.K_UP]:
@@ -617,7 +610,6 @@ class GameController:
                 self.__ship.move(self.screen)
                 self.__ship.updateSpaceshipSpriteImage()
                 self.__ship.updateSpaceshipLocation()
-                #self.__ship.draw(self.screen)
                 sendMessage = True
                 Message['Events'].append({'Type': 'Accelerate'})
             
@@ -627,12 +619,8 @@ class GameController:
                     self.__ship.Firing = True
                     projectile = self.__ship.fireMissile()
                     self.MissilesInAir.add(projectile)
-                    #self.__ship.draw(self.screen)
                     sendMessage = True
                     Message['Events'].append({'Type': 'Shoot'})
-
-            
-            self.__ship.draw(self.screen)
             
             if self.__ship.Firing == True:
                 self.__ship.updateSpaceshipLocation()
@@ -691,9 +679,6 @@ class GameController:
             self.MISSILE_COOLDOWN_TIME += 1
             self.__ship.Shields=False
 
-
-            #pygame.display.update()
-
             
         
 
@@ -713,23 +698,15 @@ class GameController:
         """
         print(body)
         #converts bytes to dictionary
-
-        try: 
-            bodyDic = ast.literal_eval(body.decode('utf-8'))
-        except ValueError:
-            pass
-        # try:
-        #     bodyDic = ast.literal_eval(body.decode('utf-8'))
-        # except:
-
+        bodyDic = ast.literal_eval(body.decode('utf-8'))
         #print(bodyDic)
 
         #if a player joins and they aren't yourself (broadcast also sends to self) and they aren't already in the game
         if bodyDic['Type'] == 'Join' and bodyDic['from'] != self.messenger.user and bodyDic['from'] not in self.__playerIds:
             print('\n' + str(bodyDic['Message']))
             
-            self.__otherPlayers.append(Spaceship( len(self.__otherPlayers)+1))
-            self.__allPlayers.append(Spaceship( len(self.__otherPlayers)+1))
+            self.__otherPlayers.append(Spaceship(bodyDic['Ship'][0], len(self.__otherPlayers)+1, bodyDic['Ship'][1]))
+            self.__allPlayers.append(Spaceship(bodyDic['Ship'][0], len(self.__otherPlayers)+1, bodyDic['Ship'][1]))
             
 
             self.__playerIds.append(bodyDic['from'])
@@ -744,10 +721,7 @@ class GameController:
 
             self.__sendMessage({'Type': 'Join',
                                 'Message': self.messenger.user + ' is in the game!',
-                                'Player_x': self.__ship.position[0],
-                                'Player_y': self.__ship.position[1]
-                            
-                                })
+                                'Ship': self.__ship.currentPosition})
             
             # if self.__host:
             #     toSend = []
@@ -857,9 +831,8 @@ GC = GameController(multiplayer = multiplayer)
 ## Run the game loop
 while GC.Running:
 
-   
-    GC.HandleEvents()
     GC.draw()
+    GC.HandleEvents()
   
 
 #     """
