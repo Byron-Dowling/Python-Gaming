@@ -36,7 +36,6 @@ if len(sys.argv) < 3:
     sys.exit()
 
 game = sys.argv[1]
-#print(game)
 player = sys.argv[2]
 creds = {
     "exchange": game,

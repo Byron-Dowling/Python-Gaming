@@ -183,6 +183,7 @@ class Spaceship(GameObject):
     def __init__(self, position, bullet_callback=None, image ="space_ship_40x40.png"):
         self.bullet_callback = bullet_callback
         self.laser_sound = load_sound("fireEffect")
+        self.tick = 0
         self.frame = 0
         self.frames = len(os.listdir("Assets\Spaceships\Idle"))
         self.image = f"Assets\Spaceships\Idle\{self.frame}.png"
@@ -233,6 +234,16 @@ class Spaceship(GameObject):
             self.velocity += self.direction * self.ACCELERATION
 
     def draw(self, surface):
+        if self.tick % 3 == 0:
+            if self.frame < self.frames - 1:
+                self.frame += 1
+                self.image = f"Assets\Spaceships\Idle\{self.frame}.png"
+                self.sprite = load_sprite(self.image, (85,85))
+            else:
+                self.frame = 0
+                self.image = f"Assets\Spaceships\Idle\{self.frame}.png"
+                self.sprite = load_sprite(self.image, (85,85))
+        self.tick += 1
         angle = self.direction.angle_to(UP)
         rotated_surface = transform.rotozoom(self.sprite, angle, 1.0)
         rotated_surface_size = Vector2(rotated_surface.get_size())

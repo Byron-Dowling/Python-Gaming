@@ -1,7 +1,7 @@
 import pygame
 
 from models import Asteroid, Spaceship, NPC, Background
-from utils import get_random_position, load_sprite, print_text
+from utils import get_random_position, load_sprite, print_text, load_sound
 from random import shuffle
 import ast
 import messenger
@@ -19,8 +19,6 @@ class SpaceRocks:
 
     def __init__(self, multiplayer=None):
         self._init_pygame()
-        # current_w = 1680, current_h = 1050
-        # self.screen = pygame.display.set_mode((1024, 768))
         self.width = 1500
         self.height = 900
         self.screen = pygame.display.set_mode((self.width, self.height))
@@ -41,6 +39,7 @@ class SpaceRocks:
                                    (1700,100),(100,800),(1100,120),(150,1000)]
         
         self.ASTEROID_COUNT = len(self.Locations)
+        self.explosion = load_sound("explosion")
 
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 64)
@@ -73,9 +72,6 @@ class SpaceRocks:
 
         self.__otherPlayers = []
         self.__allPlayers = [self.spaceship]
-
-        #print(self.__allPlayers)
-
 
         self.npcs = []
 
@@ -224,6 +220,7 @@ class SpaceRocks:
                     if asteroid.collides_with(bullet):
                         self.ASTEROID_COUNT -= 1
                         asteroid.Exploding = True
+                        self.explosion.play()
                         self.bullets.remove(bullet)
                         break
 
