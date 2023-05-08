@@ -112,7 +112,7 @@ class Asteroid(GameSprite):
         self.ANGLE = random.randrange(0, 359, 3)
         self.direction = Vector2(UP)
         self.ACCELERATION = 0.75
-        self.MAX_VELOCITY = 15
+        self.MAX_VELOCITY = 5
 
         ## Rotate by degrees in-place
         self.direction.rotate_ip(self.ANGLE)
@@ -277,6 +277,7 @@ class Spaceship(GameObject):
          return tuple(self.position)
     
     def getShieldStatus(self):
+        self.Shields = True
         return self.Shields
     
     def getVelocity(self):

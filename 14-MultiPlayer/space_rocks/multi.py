@@ -5,6 +5,7 @@ from utils import get_random_position, load_sprite, print_text, load_sound
 from random import shuffle
 import ast
 import messenger
+from pygame import mixer
 
 import pygame
 import math
@@ -20,7 +21,7 @@ class SpaceRocks:
     def __init__(self, multiplayer=None):
         self._init_pygame()
         self.width = 1500
-        self.height = 900
+        self.height = 800
         self.screen = pygame.display.set_mode((self.width, self.height))
 
         ## Background Stuff
@@ -45,13 +46,19 @@ class SpaceRocks:
         self.font = pygame.font.Font(None, 64)
         self.message = ""
 
+        #Colors = [(251,250,245),(199,206,250),(255,255,186),(186,225,255),(181,234,215),(255,183,178),(226,240,203),(224,187,228),(229,204,255),(236,221,185)]
+        #self.__color = Colors[player]
+
         self.__host = False
 
         self.asteroids = []
         self.bullets = []
         self.spaceship = Spaceship(
-            (self.width // 2, self.height // 2), self.bullets.append
+            (random.randrange(100, self.screen.get_width() - 100), random.randrange(100, self.screen.get_height() - 100)), self.bullets.append
         )
+        # self.spaceship = Spaceship(
+        #     (self.width // 2, self.height // 2), self.bullets.append
+        # )
         self.__messenger = multiplayer
 
 
@@ -120,6 +127,10 @@ class SpaceRocks:
 
 
     def main_loop(self):
+        pygame.mixer.music.load("game.mp3")
+        pygame.mixer.music.play()     
+     
+
         while True:
             self._handle_input()
             if self.started:
@@ -159,7 +170,8 @@ class SpaceRocks:
                 Message['Events'].append({'Type': 'Shoot'})
                 
             if event.type == pygame.KEYUP:
-                print("key released send message")
+                pass
+                #print("key released send message")
 
         is_key_pressed = pygame.key.get_pressed()
         
@@ -290,6 +302,7 @@ class SpaceRocks:
             self.spaceship.drawShieldBar(self.screen)
             self.spaceship.drawAsteroidKills(self.screen)
 
+
         pygame.display.flip()
         self.clock.tick(60)
 
@@ -361,7 +374,7 @@ class SpaceRocks:
                 if dics['Type'] == 'Stop':  
                     self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].accelerate(0)
                 if dics['Type'] == 'Shield':  
-                    self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].SpaceshipShields.draw(self.screen)
+                    self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].getShieldStatus()
                     
             
             
