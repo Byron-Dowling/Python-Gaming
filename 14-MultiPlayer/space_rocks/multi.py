@@ -191,8 +191,12 @@ class SpaceRocks:
                 sendMessage = True
                 Message['Events'].append({'Type': 'Stop'})
 
+            if is_key_pressed[pygame.K_RSHIFT]:
+                self.spaceship.Shields = True
+
             if sendMessage == True:
                 self.__sendMessage(Message)
+
 
     def _process_game_logic(self):
         for game_object in self._get_game_objects():
@@ -258,12 +262,15 @@ class SpaceRocks:
         Blackhole = Background(f'Assets/Background/BH/{self.BH_Frame}.png', [815,350], (150,150))
         self.screen.blit(Blackhole.image, Blackhole.rect)
 
+        self.spaceship.drawHealthBar(self.screen)
+
         for game_object in self._get_game_objects():
             game_object.draw(self.screen)
 
         if self.message:
             print_text(self.screen, self.message, self.font)
 
+        self.spaceship.drawShieldBar(self.screen)
         pygame.display.flip()
         self.clock.tick(60)
 

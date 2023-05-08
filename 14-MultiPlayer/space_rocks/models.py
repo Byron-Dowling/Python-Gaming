@@ -154,6 +154,62 @@ class Asteroid(GameSprite):
             self.InOrbit = False
             self.kill() 
 
+###################################################################################################
+""" 
+ ███████╗██╗  ██╗██╗███████╗██╗     ██████╗ ███████╗
+ ██╔════╝██║  ██║██║██╔════╝██║     ██╔══██╗██╔════╝
+ ███████╗███████║██║█████╗  ██║     ██║  ██║███████╗
+ ╚════██║██╔══██║██║██╔══╝  ██║     ██║  ██║╚════██║
+ ███████║██║  ██║██║███████╗███████╗██████╔╝███████║
+ ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═════╝ ╚══════╝
+                                                    
+"""
+class Shields(GameSprite):
+    def __init__(self, location):
+        self.Shield_Frames = len(os.listdir("Assets\Sprites\Shields"))
+        self.Shield_Frame = 0
+        self.Location = location
+        self.Smoothscale = (170,170)
+        self.imageLink = f'Assets\Sprites\Shields\{self.Shield_Frame}.png'
+        self.SHIELD_HEALTH = 75
+        self.SHIELDS_COOLDOWN = 100
+        self.COOLING_DOWN = False
+
+        self.spriteObject = load_sprite_rotated(self.imageLink, self.Smoothscale, 0)
+
+        super().__init__(self.Location, self.spriteObject, Vector2(0))
+
+    def updateFrames(self):
+        if self.Shield_Frame < self.Shield_Frames - 1:
+            self.Shield_Frame += 1
+            self.imageLink = f'Assets\Sprites\Shields\{self.Shield_Frame}.png'
+            self.spriteObject = load_sprite(self.imageLink, self.Smoothscale)
+            self.sprite = self.spriteObject
+        else:
+            self.Shield_Frame = 0
+            self.imageLink = f'Assets\Sprites\Shields\{self.Shield_Frame}.png'
+            self.spriteObject = load_sprite(self.imageLink, self.Smoothscale)
+            self.sprite = self.spriteObject
+
+    def updateShields(self, usingShields):
+        if self.COOLING_DOWN == False:
+            if usingShields:
+                if self.SHIELD_HEALTH > 0:
+                    self.SHIELD_HEALTH -= 1
+                else:
+                    self.COOLING_DOWN = True
+            else:
+                if self.SHIELD_HEALTH < 75:
+                    self.SHIELD_HEALTH += 1
+        else:
+            self.SHIELDS_COOLDOWN -= 1
+
+            if self.SHIELDS_COOLDOWN == 0:
+                self.COOLING_DOWN = False
+                self.SHIELD_HEALTH = 76
+                self.SHIELDS_COOLDOWN = 100
+
+###################################################################################################
 
 class GameObject:
     def __init__(self, position, sprite, velocity):
@@ -176,7 +232,7 @@ class GameObject:
 
 
 class Spaceship(GameObject):
-    MANEUVERABILITY = 3
+    MANEUVERABILITY = 5
     ACCELERATION = 0.25
     BULLET_SPEED = 50
 
@@ -187,9 +243,17 @@ class Spaceship(GameObject):
         self.frame = 0
         self.frames = len(os.listdir("Assets\Spaceships\Idle"))
         self.image = f"Assets\Spaceships\Idle\{self.frame}.png"
+        self.RED = (255,0,0)
+        self.GREEN = (0,255,0)
         # Make a copy of the original UP vector
         self.direction = Vector2(UP)
         self.ANGLE = 0
+        self.HEALTH = 10
+
+        ## Shields stuff
+        self.Shields = False
+        self.SpaceshipShields = Shields(tuple(position))
+
         # self.ship_stuff = self.__str__()['ship_image']
         # self.ship_loc = self.__str__()['position']
 
@@ -213,6 +277,21 @@ class Spaceship(GameObject):
     
     def getVelocity(self):
         return self.velocity.x, self.velocity.y
+    
+    def drawHealthBar(self, screen):
+        pygame.draw.rect(screen, self.RED, (self.position[0] - 25, self.position[1] + 50, 50, 10))
+        pygame.draw.rect(screen, self.GREEN, (self.position[0] - 25, self.position[1] + 50, 50 - (5 * (10 - self.HEALTH)), 10))
+    
+    def drawShieldBar(self, screen):
+        shield_font = pygame.font.SysFont('Algerian', 30)
+        player_shield_text = shield_font.render(
+                "Player Shields: " + str(self.SpaceshipShields.SHIELD_HEALTH), 1, (255,255,255))
+        screen.blit(player_shield_text, (1200,10))
+
+        shield_cooldown_font = pygame.font.SysFont('Algerian', 30)
+        player_shield_cooldown_text = shield_cooldown_font.render(
+                "Cooldown Time: " + str(self.SpaceshipShields.SHIELDS_COOLDOWN), 1, (255,255,255))
+        screen.blit(player_shield_cooldown_text, (1200,40))
 
     def rotate(self, clockwise=True):
         sign = 1 if clockwise else -1
@@ -249,6 +328,18 @@ class Spaceship(GameObject):
         rotated_surface_size = Vector2(rotated_surface.get_size())
         blit_position = self.position - rotated_surface_size * 0.5
         surface.blit(rotated_surface, blit_position)
+        self.SpaceshipShields.Location = self.position
+        
+        if self.Shields:
+            if self.SpaceshipShields.COOLING_DOWN == False:
+                self.SpaceshipShields.draw(surface)
+                self.SpaceshipShields.updateFrames()
+                self.SpaceshipShields.updateShields(self.Shields)
+                self.Shields = False
+                self.SpaceshipShields.position = self.getLocation()
+            else:
+                self.SpaceshipShields.updateShields(self.Shields)
+
 
     def shoot(self):
         bullet_velocity = self.direction * self.BULLET_SPEED + self.velocity
@@ -379,13 +470,13 @@ class Bullet(GameObject):
         self.tick += 1
         self.position = self.position + self.velocity
 
-        if self.tick % 3 == 0:
+        if self.tick % 2 == 0:
 
             if self.frame < self.frames - 1:
                 self.frame += 1
                 self.imageLink = f"Assets\Sprites\Projectile\{self.frame}.png"
+                self.sprite = load_sprite_rotated(self.imageLink, (100,100), self.ANGLE)
             else:
                 self.frame = 0
                 self.imageLink = f"Assets\Sprites\Projectile\{self.frame}.png"
-
-            load_sprite_rotated(self.imageLink, (100,100), self.ANGLE)
+                self.sprite = load_sprite_rotated(self.imageLink, (100,100), self.ANGLE)

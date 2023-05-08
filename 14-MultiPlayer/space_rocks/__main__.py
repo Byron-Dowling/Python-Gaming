@@ -17,8 +17,6 @@ import sys
     
     - Find a different projectile or fix the rotation
         - Rotation is happening the wrong way
-    - Add trailing health bar for ship, maybe Player name bar as well
-    - Add Shields
     - Do Collision detection between projectiles and players
 """
 
