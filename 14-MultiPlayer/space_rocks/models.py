@@ -49,6 +49,110 @@ class Background(pygame.sprite.Sprite):
             im = Image.open(path)
             return im.size
         return None
+    
+###################################################################################################
+"""
+  ██████╗  █████╗ ███╗   ███╗███████╗        
+ ██╔════╝ ██╔══██╗████╗ ████║██╔════╝        
+ ██║  ███╗███████║██╔████╔██║█████╗          
+ ██║   ██║██╔══██║██║╚██╔╝██║██╔══╝          
+ ╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗        
+  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝        
+                                             
+ ███████╗██████╗ ██████╗ ██╗████████╗███████╗
+ ██╔════╝██╔══██╗██╔══██╗██║╚══██╔══╝██╔════╝
+ ███████╗██████╔╝██████╔╝██║   ██║   █████╗  
+ ╚════██║██╔═══╝ ██╔══██╗██║   ██║   ██╔══╝  
+ ███████║██║     ██║  ██║██║   ██║   ███████╗
+ ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   ╚══════╝
+
+"""
+class GameSprite(pygame.sprite.Sprite):
+    def __init__(self, position, sprite, velocity):
+        self.position = Vector2(position)
+        self.sprite = sprite
+        self.radius = sprite.get_width() / 2
+        self.velocity = Vector2(velocity)
+
+        super().__init__()
+
+    def draw(self, surface):
+        blit_position = self.position - Vector2(self.radius)
+        surface.blit(self.sprite, blit_position)
+
+    def move(self, surface, missile=False):
+        if not missile:
+            self.position = wrap_position(self.position + self.velocity, surface)
+        else:
+            self.position = (self.position + self.velocity)
+
+    def collides_with(self, other_obj):
+        distance = self.position.distance_to(other_obj.position)
+        return distance < self.radius + other_obj.radius
+
+###################################################################################################
+"""
+  █████╗ ███████╗████████╗███████╗██████╗  ██████╗ ██╗██████╗ 
+ ██╔══██╗██╔════╝╚══██╔══╝██╔════╝██╔══██╗██╔═══██╗██║██╔══██╗
+ ███████║███████╗   ██║   █████╗  ██████╔╝██║   ██║██║██║  ██║
+ ██╔══██║╚════██║   ██║   ██╔══╝  ██╔══██╗██║   ██║██║██║  ██║
+ ██║  ██║███████║   ██║   ███████╗██║  ██║╚██████╔╝██║██████╔╝
+ ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝╚═════╝ 
+                                                              
+"""
+class Asteroid(GameSprite):
+    def __init__(self, location, smsc_dimensions):
+        self.IdleImageLink = r"Assets\Sprites\Asteroids\Explosion\0.png"
+        self.Explosion_Frames = len(os.listdir("Assets\Sprites\Asteroids\Explosion"))
+        self.Explosion_Frame = 0
+        self.InOrbit = True
+        self.Exploding = False
+        self.Smoothscale=smsc_dimensions
+        self.spriteObject = load_sprite(self.IdleImageLink, self.Smoothscale)
+        self.ANGLE = random.randrange(0, 359, 3)
+        self.direction = Vector2(UP)
+        self.ACCELERATION = 0.125
+        self.MAX_VELOCITY = 2.5
+
+        ## Rotate by degrees in-place
+        self.direction.rotate_ip(self.ANGLE)
+
+        self.direction[0] = abs(self.direction[0])
+        self.direction[1] = abs(self.direction[1])
+
+        self.getUnitCircleQuadrant()
+
+        GameSprite.__init__(self, location, self.spriteObject, Vector2(self.direction))
+
+    ## Modified Unit Circle Trig Math
+    def getUnitCircleQuadrant(self):
+        if self.ANGLE >= 0 and self.ANGLE <= 90:
+            ## Where X is negative and Y is negative
+            self.direction[0] = self.direction[0] * -1
+            self.direction[1] = self.direction[1] * -1
+        elif self.ANGLE > 90 and self.ANGLE <= 180:
+            ## Where X is negative and Y is positve
+            self.direction[0] = self.direction[0] * -1
+        elif self.ANGLE > 270 and self.ANGLE <= 359:
+            ## Where X is positive and Y is negative
+            self.direction[1] = self.direction[1] * -1
+
+    def drawAsteroid(self, screen):
+        if self.velocity.length() < self.MAX_VELOCITY:
+            self.velocity += self.direction * self.ACCELERATION
+        GameSprite.draw(self, screen)
+        GameSprite.move(self, screen, False)
+
+    def destroy(self):
+        imageLink = f"Assets\Sprites\Asteroids\Explosion\{self.Explosion_Frame}.png"
+        self.spriteObject = load_sprite(imageLink, self.Smoothscale)
+        self.sprite = self.spriteObject
+
+        if self.Explosion_Frame < self.Explosion_Frames - 1:
+            self.Explosion_Frame += 1
+        else:
+            self.InOrbit = False
+            self.kill() 
 
 
 class GameObject:
@@ -78,7 +182,7 @@ class Spaceship(GameObject):
 
     def __init__(self, position, bullet_callback=None, image ="space_ship_40x40.png"):
         self.bullet_callback = bullet_callback
-        self.laser_sound = load_sound("laser")
+        self.laser_sound = load_sound("fireEffect")
         self.frame = 0
         self.frames = len(os.listdir("Assets\Spaceships\Idle"))
         self.image = f"Assets\Spaceships\Idle\{self.frame}.png"
@@ -88,7 +192,7 @@ class Spaceship(GameObject):
         # self.ship_stuff = self.__str__()['ship_image']
         # self.ship_loc = self.__str__()['position']
 
-        super().__init__(position, load_sprite(self.image), Vector2(0))
+        super().__init__(position, load_sprite(self.image, (85,85)), Vector2(0))
 
     def __str__(self):
         """String version of this objects state"""
@@ -242,26 +346,6 @@ class NPC(Spaceship):
     #             else:
     #                 self.shot_time_total = 0
     #                 self.cooldown += time_from_last_shot
-
-
-class Asteroid(GameObject):
-    def __init__(self, position, create_asteroid_callback, size=3):
-        self.create_asteroid_callback = create_asteroid_callback
-        self.size = size
-
-        size_to_scale = {3: 1.0, 2: 0.5, 1: 0.25}
-        scale = size_to_scale[size]
-        sprite = transform.rotozoom(load_sprite("asteroid"), 0, scale)
-
-        super().__init__(position, sprite, get_random_velocity(0, 0))
-
-    def split(self):
-        if self.size > 1:
-            for _ in range(2):
-                asteroid = Asteroid(
-                    self.position, self.create_asteroid_callback, self.size - 1
-                )
-                self.create_asteroid_callback(asteroid)
 
 
 class Bullet(GameObject):

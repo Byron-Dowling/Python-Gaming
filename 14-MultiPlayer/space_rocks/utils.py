@@ -7,7 +7,7 @@ from pygame.mixer import Sound
 from pygame import math as pymath
 
 
-def load_sprite(name, with_alpha=True):
+def load_sprite(name, smsc, with_alpha=True):
 
     try:
         path = f"sprites\{name}.png"
@@ -15,7 +15,7 @@ def load_sprite(name, with_alpha=True):
     except:
         path = name
         loaded_sprite = load(path)
-        loaded_sprite = transform.smoothscale(loaded_sprite, (85,85))
+        loaded_sprite = transform.smoothscale(loaded_sprite, smsc)
 
 
     if with_alpha:

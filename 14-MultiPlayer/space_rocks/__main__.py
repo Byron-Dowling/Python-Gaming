@@ -16,11 +16,10 @@ import sys
  
     
     - Find a different projectile or fix the rotation
+        - Rotation is happening the wrong way
     - Add trailing health bar for ship, maybe Player name bar as well
-    - Add Asteroids
     - Add Shields
-    - Do Collision detection between projectiles and players + asteroids
-    - Change that stupid pew sound
+    - Do Collision detection between projectiles and players
 """
 
 
