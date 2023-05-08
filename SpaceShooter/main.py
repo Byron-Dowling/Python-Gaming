@@ -456,9 +456,9 @@ class GameController:
         self.__ship = self.__ship.position[0], self.__ship.position[1]
 
         self.Locations = [(100,150),(300,300),(800,400),(1300,200),
-                                   (1100,600),(700,700),(1500,620),(650,450),
-                                   (1700,850),(800,800),(100,620),(150,450),
-                                   (1700,100),(100,800),(1100,120),(150,1000)]
+                                   (1100,600),(700,700),(1450,620),(650,450),
+                                   (1400,850),(800,800),(100,620),(150,450),
+                                   (1400,100),(100,800),(1100,120),(150,1000)]
         self.AsteroidCount = 16
         self.Asteroids = []
         self.MissilesInAir = pygame.sprite.Group()
@@ -577,7 +577,14 @@ class GameController:
 
     def HandleEvents(self):
         """ 
-        Handles the keyboard imput and message passing for multiple players
+            Handles the keyboard imput and message passing for multiple players
+
+            Ideas:
+                - Pass message on all key-down events such as when finished rotating
+                  and when using the brake
+
+                - Pass message when accelerating if no message has been passed within
+                  a certain time threshold such as longer than 10 "ticks"
         """
         sendMessage = False
         Message = {
@@ -836,7 +843,7 @@ multiplayer = Rabbit(creds)
 GC = GameController(multiplayer = multiplayer)
 #screen = pygame.display.set_mode((GC.screenWidth, GC.screenHeight))
 
-
+GC.GameLoop()
 
 
 
@@ -855,12 +862,10 @@ GC = GameController(multiplayer = multiplayer)
 
 
 ## Run the game loop
-while GC.Running:
-
-   
-    GC.HandleEvents()
-    GC.draw()
-  
+# while GC.Running:
+#     for event in pygame.event.get():
+#         if event.type == pygame.QUIT:
+#             GC.Running = False
 
 #     """
 #         Background Layering
