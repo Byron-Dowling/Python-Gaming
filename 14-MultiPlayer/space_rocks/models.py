@@ -4,7 +4,7 @@ from pygame import time
 from PIL import Image
 
 import random
-from utils import get_random_velocity, load_sound, load_sprite, wrap_position, distance
+from utils import get_random_velocity, load_sound, load_sprite, load_sprite_rotated, wrap_position, distance
 import math
 import os
 import pygame
@@ -74,18 +74,21 @@ class GameObject:
 class Spaceship(GameObject):
     MANEUVERABILITY = 3
     ACCELERATION = 0.25
-    BULLET_SPEED = 100
+    BULLET_SPEED = 50
 
-    def __init__(self, position, bullet_callback=None, ship="space_ship_40x40"):
+    def __init__(self, position, bullet_callback=None, image ="space_ship_40x40.png"):
         self.bullet_callback = bullet_callback
         self.laser_sound = load_sound("laser")
-        self.image = ship
+        self.frame = 0
+        self.frames = len(os.listdir("Assets\Spaceships\Idle"))
+        self.image = f"Assets\Spaceships\Idle\{self.frame}.png"
         # Make a copy of the original UP vector
         self.direction = Vector2(UP)
+        self.ANGLE = 0
         # self.ship_stuff = self.__str__()['ship_image']
         # self.ship_loc = self.__str__()['position']
 
-        super().__init__(position, load_sprite(ship), Vector2(0))
+        super().__init__(position, load_sprite(self.image), Vector2(0))
 
     def __str__(self):
         """String version of this objects state"""
@@ -109,7 +112,15 @@ class Spaceship(GameObject):
     def rotate(self, clockwise=True):
         sign = 1 if clockwise else -1
         angle = self.MANEUVERABILITY * sign
+        self.ANGLE += self.MANEUVERABILITY * sign
+
+        if self.ANGLE > 360:
+            self.ANGLE -= 360
+        elif self.ANGLE < 0:
+            self.ANGLE += 360
+
         self.direction.rotate_ip(angle)
+        print(f"Rotating to direction: {self.direction} and angle: {self.ANGLE}")
 
     def accelerate(self, velocity=None):
         if velocity != None:
@@ -126,7 +137,7 @@ class Spaceship(GameObject):
 
     def shoot(self):
         bullet_velocity = self.direction * self.BULLET_SPEED + self.velocity
-        bullet = Bullet(tuple(self.position), bullet_velocity)
+        bullet = Bullet(tuple(self.position), bullet_velocity, self.ANGLE)
         self.bullet_callback(bullet)
         self.laser_sound.play()
 
@@ -254,8 +265,32 @@ class Asteroid(GameObject):
 
 
 class Bullet(GameObject):
-    def __init__(self, position, velocity):
-        super().__init__(position, load_sprite("bullet"), velocity)
+    def __init__(self, position, velocity, firingAngle):
+        """
+            load_sprite_rotated(imageLink, smsc, angle, with_alpha=True)
+        """
+        self.frame = 0
+        self.frames = len(os.listdir("Assets\Sprites\Projectile"))
+        self.ANGLE = firingAngle
+        self.imageLink = f"Assets\Sprites\Projectile\{self.frame}.png"
+
+        print(f"Firing a bullet at {self.ANGLE} degrees.")
+
+        super().__init__(position, load_sprite_rotated(self.imageLink, (100,100), firingAngle), velocity)
+
+        self.tick = 0
 
     def move(self, surface):
+        self.tick += 1
         self.position = self.position + self.velocity
+
+        if self.tick % 3 == 0:
+
+            if self.frame < self.frames - 1:
+                self.frame += 1
+                self.imageLink = f"Assets\Sprites\Projectile\{self.frame}.png"
+            else:
+                self.frame = 0
+                self.imageLink = f"Assets\Sprites\Projectile\{self.frame}.png"
+
+            load_sprite_rotated(self.imageLink, (100,100), self.ANGLE)

@@ -4,11 +4,32 @@ from multi import SpaceRocks
 from messenger import Messenger
 import sys
 
+"""
+ 
+ ████████╗ ██████╗     ██████╗  ██████╗     ██╗     ██╗███████╗████████╗
+ ╚══██╔══╝██╔═══██╗    ██╔══██╗██╔═══██╗    ██║     ██║██╔════╝╚══██╔══╝
+    ██║   ██║   ██║    ██║  ██║██║   ██║    ██║     ██║███████╗   ██║   
+    ██║   ██║   ██║    ██║  ██║██║   ██║    ██║     ██║╚════██║   ██║   
+    ██║   ╚██████╔╝    ██████╔╝╚██████╔╝    ███████╗██║███████║   ██║   
+    ╚═╝    ╚═════╝     ╚═════╝  ╚═════╝     ╚══════╝╚═╝╚══════╝   ╚═╝   
+                                                                        
+ 
+    
+    - Find a different projectile or fix the rotation
+    - Add trailing health bar for ship, maybe Player name bar as well
+    - Add Asteroids
+    - Add Shields
+    - Do Collision detection between projectiles and players + asteroids
+    - Change that stupid pew sound
+"""
+
 
 """
-python ex_05.py game1 player-1 'player-12023!!!!!'
+    Example Run commands:
+        python ex_05.py game1 player-1 'player-12023!!!!!'
 
- python .\__main__.py  game-01 player-02 'player-022023!!!!!'
+        python .\__main__.py  game-01 player-01 'player-022023!!!!!'
+        python .\__main__.py  game-01 player-02 'player-022023!!!!!'
 """
 if len(sys.argv) < 3:
     print("Need: exchange and player ")

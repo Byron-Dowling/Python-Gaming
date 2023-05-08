@@ -1,6 +1,6 @@
 import random
 import math
-from pygame import Color
+from pygame import Color, transform
 from pygame.image import load
 from pygame.math import Vector2
 from pygame.mixer import Sound
@@ -9,10 +9,25 @@ from pygame import math as pymath
 
 def load_sprite(name, with_alpha=True):
 
-    
-    path = f"sprites/{name}.png"
-    loaded_sprite = load(path)
+    try:
+        path = f"sprites\{name}.png"
+        loaded_sprite = load(path)
+    except:
+        path = name
+        loaded_sprite = load(path)
+        loaded_sprite = transform.smoothscale(loaded_sprite, (85,85))
 
+
+    if with_alpha:
+        return loaded_sprite.convert_alpha()
+    else:
+        return loaded_sprite.convert()
+    
+def load_sprite_rotated(imageLink, smsc, angle, with_alpha=True):
+    loaded_sprite = load(imageLink)
+    loaded_sprite = transform.smoothscale(loaded_sprite, smsc)
+    loaded_sprite = transform.rotate(loaded_sprite, angle)  
+    
     if with_alpha:
         return loaded_sprite.convert_alpha()
     else:

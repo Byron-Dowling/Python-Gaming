@@ -33,8 +33,11 @@ class SpaceRocks:
         self.BH_Frames = len(os.listdir("Assets/Background/BH"))
         self.BH_Frame = 0
 
-        # self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        # self.background = load_sprite("space", False)
+        ## Asteroid Stuff
+        self.Locations = [(100,150),(300,300),(800,400),(1300,200),
+                                   (1100,600),(700,700),(1500,620),(650,450),
+                                   (1700,850),(800,800),(100,620),(150,450),
+                                   (1700,100),(100,800),(1100,120),(150,1000)]
 
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 64)
