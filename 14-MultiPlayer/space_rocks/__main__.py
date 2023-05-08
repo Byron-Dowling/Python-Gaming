@@ -4,11 +4,29 @@ from multi import SpaceRocks
 from messenger import Messenger
 import sys
 
+"""
+ 
+ ████████╗ ██████╗     ██████╗  ██████╗     ██╗     ██╗███████╗████████╗
+ ╚══██╔══╝██╔═══██╗    ██╔══██╗██╔═══██╗    ██║     ██║██╔════╝╚══██╔══╝
+    ██║   ██║   ██║    ██║  ██║██║   ██║    ██║     ██║███████╗   ██║   
+    ██║   ██║   ██║    ██║  ██║██║   ██║    ██║     ██║╚════██║   ██║   
+    ██║   ╚██████╔╝    ██████╔╝╚██████╔╝    ███████╗██║███████║   ██║   
+    ╚═╝    ╚═════╝     ╚═════╝  ╚═════╝     ╚══════╝╚═╝╚══════╝   ╚═╝   
+                                                                        
+ 
+    
+    - Find a different projectile or fix the rotation
+        - Rotation is happening the wrong way
+    - Do Collision detection between projectiles and players
+"""
+
 
 """
-python ex_05.py game1 player-1 'player-12023!!!!!'
+    Example Run commands:
+        python ex_05.py game1 player-1 'player-12023!!!!!'
 
- python .\__main__.py  game-01 player-02 'player-022023!!!!!'
+        python .\__main__.py  game-01 player-01 'player-022023!!!!!'
+        python .\__main__.py  game-01 player-02 'player-022023!!!!!'
 """
 if len(sys.argv) < 3:
     print("Need: exchange and player ")
@@ -16,7 +34,6 @@ if len(sys.argv) < 3:
     sys.exit()
 
 game = sys.argv[1]
-#print(game)
 player = sys.argv[2]
 creds = {
     "exchange": game,

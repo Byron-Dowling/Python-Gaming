@@ -337,6 +337,7 @@ class Spaceship(GameSprite):
         self.getUnitCircleQuadrant()
 
         self.updateSpaceshipLocation()
+        print(f"Firing missle from Angle: {self.ANGLE}")
         SpaceshipMissile = Missiles(self.currentPosition, self.direction, self.ANGLE)
         return SpaceshipMissile
     
