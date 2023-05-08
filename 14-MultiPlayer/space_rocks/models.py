@@ -1,14 +1,54 @@
 from pygame.math import Vector2
 from pygame import transform
 from pygame import time
+from PIL import Image
 
 import random
 from utils import get_random_velocity, load_sound, load_sprite, wrap_position, distance
 import math
+import os
+import pygame
 
 import json
 
 UP = Vector2(0, -1)
+
+
+"""
+ ██████╗  █████╗  ██████╗██╗  ██╗ ██████╗ ██████╗  ██████╗ ██╗   ██╗███╗   ██╗██████╗ 
+ ██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██╔════╝ ██╔══██╗██╔═══██╗██║   ██║████╗  ██║██╔══██╗
+ ██████╔╝███████║██║     █████╔╝ ██║  ███╗██████╔╝██║   ██║██║   ██║██╔██╗ ██║██║  ██║
+ ██╔══██╗██╔══██║██║     ██╔═██╗ ██║   ██║██╔══██╗██║   ██║██║   ██║██║╚██╗██║██║  ██║
+ ██████╔╝██║  ██║╚██████╗██║  ██╗╚██████╔╝██║  ██║╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝
+ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ 
+                                                                                      
+ ██╗███╗   ███╗ █████╗  ██████╗ ███████╗██████╗ ██╗   ██╗                             
+ ██║████╗ ████║██╔══██╗██╔════╝ ██╔════╝██╔══██╗╚██╗ ██╔╝                             
+ ██║██╔████╔██║███████║██║  ███╗█████╗  ██████╔╝ ╚████╔╝                              
+ ██║██║╚██╔╝██║██╔══██║██║   ██║██╔══╝  ██╔══██╗  ╚██╔╝                               
+ ██║██║ ╚═╝ ██║██║  ██║╚██████╔╝███████╗██║  ██║   ██║                                
+ ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝                                                                                                          
+"""
+class Background(pygame.sprite.Sprite):
+    def __init__(self, image_file, location, size):
+
+        pygame.sprite.Sprite.__init__(self)
+        self.width, self.height = self.getImgWidthHeight(image_file)
+        self.image = pygame.image.load(image_file)
+        self.image = pygame.transform.scale(self.image, size)
+
+        self.rect = self.image.get_rect()
+        self.rect.left, self.rect.top = location
+
+    def getImgWidthHeight(self, path):
+        """Uses pil to image size in pixels.
+        Params:
+            path (string) : path to the image
+        """
+        if os.path.isfile(path):
+            im = Image.open(path)
+            return im.size
+        return None
 
 
 class GameObject:

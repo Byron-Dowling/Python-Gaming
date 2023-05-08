@@ -1,6 +1,6 @@
 import pygame
 
-from models import Asteroid, Spaceship, NPC
+from models import Asteroid, Spaceship, NPC, Background
 from utils import get_random_position, load_sprite, print_text
 import ast
 import messenger
@@ -10,6 +10,7 @@ import math
 import random
 from pygame.math import Vector2
 import sys
+import os
 
 
 class SpaceRocks:
@@ -19,9 +20,18 @@ class SpaceRocks:
         self._init_pygame()
         # current_w = 1680, current_h = 1050
         # self.screen = pygame.display.set_mode((1024, 768))
-        self.width = 800
-        self.height = 600
+        self.width = 1500
+        self.height = 900
         self.screen = pygame.display.set_mode((self.width, self.height))
+
+        ## Background Stuff
+        self.tick = 0
+        self.BG_Frames = len(os.listdir("Assets/Background/Stars"))
+        self.BG_Frame = 0
+        self.RS_Frames = len(os.listdir("Assets/Background/RotaryStar"))
+        self.RS_Frame = 0
+        self.BH_Frames = len(os.listdir("Assets/Background/BH"))
+        self.BH_Frame = 0
 
         # self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         # self.background = load_sprite("space", False)
@@ -99,6 +109,22 @@ class SpaceRocks:
 
     def other_npcs(self):
         return self.npcs
+    
+
+    def updateFrames(self):
+        if self.BG_Frame < self.BG_Frames - 1:
+            self.BG_Frame += 1
+        else:
+            self.BG_Frame = 0
+        if self.RS_Frame < self.RS_Frames - 1:
+            self.RS_Frame += 1
+        else:
+            self.RS_Frame = 0
+        if self.BH_Frame < self.BH_Frames - 1:
+            self.BH_Frame += 1
+        else:
+            self.BH_Frame = 0
+
 
     def main_loop(self):
         while True:
@@ -107,6 +133,10 @@ class SpaceRocks:
                 self._process_game_logic()
             # print(self.spaceship.getAttributes())
             self._draw()
+
+            if self.tick % 3 == 0:
+                self.updateFrames()
+            self.tick += 1
             
 
     def _init_pygame(self):
@@ -212,6 +242,18 @@ class SpaceRocks:
 
         self.screen.fill((0, 0, 0))
         # print(self.multiplayer)
+
+        StarryBackground = Background(f"Assets/Background/Stars/{self.BG_Frame}.png", [0, 0], (self.width, self.height))
+        self.screen.blit(StarryBackground.image, StarryBackground.rect)
+
+        RotaryStar1 = Background(f'Assets/Background/RotaryStar/{self.RS_Frame}.png', [210,500], (100,100))
+        self.screen.blit(RotaryStar1.image, RotaryStar1.rect)
+
+        RotaryStar2 = Background(f'Assets/Background/RotaryStar/{self.RS_Frame}.png', [1210,110], (100,100))
+        self.screen.blit(RotaryStar2.image, RotaryStar2.rect)
+
+        Blackhole = Background(f'Assets/Background/BH/{self.BH_Frame}.png', [815,350], (150,150))
+        self.screen.blit(Blackhole.image, Blackhole.rect)
 
         for game_object in self._get_game_objects():
             # print(game_object)
