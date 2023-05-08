@@ -77,8 +77,6 @@ class Background(pygame.sprite.Sprite):
  ███████║██║     ██║  ██║██║   ██║   ███████╗
  ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   ╚══════╝
 
- GameSprite.__init__(self, self.currentPosition, self.spriteObject, Vector2(0))
-
 """
 class GameSprite(pygame.sprite.Sprite):
     def __init__(self, position, sprite, velocity):
@@ -595,7 +593,6 @@ while GC.Running:
                 Player1_Spaceship.RotateRight = False
             elif event.key == pygame.K_RSHIFT:
                 Player1_Spaceship.Shields = False
-
 
     """
         Handling Game Logic
