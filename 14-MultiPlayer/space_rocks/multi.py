@@ -33,9 +33,9 @@ class SpaceRocks:
         self.BH_Frame = 0
 
         ## Asteroid Stuff
-        self.Locations = [(100,150),(300,300),(800,400),(1300,200),
-                                   (1100,600),(700,700),(1500,620),(650,450),
-                                   (1700,850),(800,800),(100,620),(150,450),
+        self.Locations = [(100,150),(300,300),(500,200),(1300,200),
+                                   (1100,600),(700,700),(1500,620),(650,150),
+                                   (1700,850),(900,800),(100,620),(150,150),
                                    (1700,100),(100,800),(1100,120),(150,1000)]
         
         self.ASTEROID_COUNT = len(self.Locations)
@@ -193,6 +193,8 @@ class SpaceRocks:
 
             if is_key_pressed[pygame.K_RSHIFT]:
                 self.spaceship.Shields = True
+                sendMessage = True
+                Message['Events'].append({'Type': 'Shield'})
 
             if sendMessage == True:
                 self.__sendMessage(Message)
@@ -201,15 +203,26 @@ class SpaceRocks:
     def _process_game_logic(self):
         for game_object in self._get_game_objects():
             #print(game_object)
-            game_object.move(self.screen)
+            if game_object:
+                try:
+                    game_object.drawAsteroid(self.screen)
+                except:
+                    game_object.move(self.screen)
 
         ## Not sure we care about spaceship asteroid collisions
-        # if self.spaceship:
-        #     for asteroid in self.asteroids:
-        #         if asteroid.collides_with(self.spaceship):
-        #             self.spaceship = None
-        #             self.message = "You lost!"
-        #             break
+        if self.spaceship:
+            for asteroid in self.asteroids:
+                if asteroid.collides_with(self.spaceship):
+
+                    asteroid.velocity *= -1
+
+                    if self.spaceship.Shields == False:
+                        self.spaceship.HEALTH -= 1
+
+                        if self.spaceship.HEALTH< 1:
+                            self.spaceship = None
+                            self.message = "You lost!"
+                            break
 
         if len(self.npcs) > 0:
             for npc in self.npcs:
@@ -223,6 +236,8 @@ class SpaceRocks:
                 if asteroid.Exploding == False:
                     if asteroid.collides_with(bullet):
                         self.ASTEROID_COUNT -= 1
+                        if self.spaceship:
+                            self.spaceship.ASTEROIDS_DESTROYED += 1
                         asteroid.Exploding = True
                         self.explosion.play()
                         self.bullets.remove(bullet)
@@ -232,6 +247,8 @@ class SpaceRocks:
             if asteroid.InOrbit:
                 if asteroid.Exploding:
                     asteroid.destroy()
+            else:
+                self.asteroids.remove(asteroid)
 
         for bullet in self.bullets[:]:
             print(bullet)
@@ -262,15 +279,17 @@ class SpaceRocks:
         Blackhole = Background(f'Assets/Background/BH/{self.BH_Frame}.png', [815,350], (150,150))
         self.screen.blit(Blackhole.image, Blackhole.rect)
 
-        self.spaceship.drawHealthBar(self.screen)
-
         for game_object in self._get_game_objects():
             game_object.draw(self.screen)
 
         if self.message:
             print_text(self.screen, self.message, self.font)
 
-        self.spaceship.drawShieldBar(self.screen)
+        if self.spaceship:
+            self.spaceship.drawHealthBar(self.screen)
+            self.spaceship.drawShieldBar(self.screen)
+            self.spaceship.drawAsteroidKills(self.screen)
+
         pygame.display.flip()
         self.clock.tick(60)
 
@@ -341,7 +360,9 @@ class SpaceRocks:
                     self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].shoot()
                 if dics['Type'] == 'Stop':  
                     self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].accelerate(0)
-        
+                if dics['Type'] == 'Shield':  
+                    self.__otherPlayers[self.__playerIds.index(bodyDic['from'])].SpaceshipShields.draw(self.screen)
+                    
             
             
     def __sendMessage(self, bodyDic):

@@ -111,8 +111,8 @@ class Asteroid(GameSprite):
         self.spriteObject = load_sprite(self.IdleImageLink, self.Smoothscale)
         self.ANGLE = random.randrange(0, 359, 3)
         self.direction = Vector2(UP)
-        self.ACCELERATION = 0.125
-        self.MAX_VELOCITY = 2.5
+        self.ACCELERATION = 0.75
+        self.MAX_VELOCITY = 15
 
         ## Rotate by degrees in-place
         self.direction.rotate_ip(self.ANGLE)
@@ -245,6 +245,7 @@ class Spaceship(GameObject):
         self.image = f"Assets\Spaceships\Idle\{self.frame}.png"
         self.RED = (255,0,0)
         self.GREEN = (0,255,0)
+        self.ASTEROIDS_DESTROYED = 0
         # Make a copy of the original UP vector
         self.direction = Vector2(UP)
         self.ANGLE = 0
@@ -275,9 +276,19 @@ class Spaceship(GameObject):
     def getLocation(self):
          return tuple(self.position)
     
+    def getShieldStatus(self):
+        return self.Shields
+    
     def getVelocity(self):
         return self.velocity.x, self.velocity.y
     
+    def drawAsteroidKills(self, screen):
+        kill_font = pygame.font.SysFont('Algerian', 30)
+        player_kills_text = kill_font.render(
+                "Asteroid Kills: " + str(self.ASTEROIDS_DESTROYED), 1, (255,255,255))
+        screen.blit(player_kills_text, (1180,80))
+
+
     def drawHealthBar(self, screen):
         pygame.draw.rect(screen, self.RED, (self.position[0] - 25, self.position[1] + 50, 50, 10))
         pygame.draw.rect(screen, self.GREEN, (self.position[0] - 25, self.position[1] + 50, 50 - (5 * (10 - self.HEALTH)), 10))
@@ -286,12 +297,12 @@ class Spaceship(GameObject):
         shield_font = pygame.font.SysFont('Algerian', 30)
         player_shield_text = shield_font.render(
                 "Player Shields: " + str(self.SpaceshipShields.SHIELD_HEALTH), 1, (255,255,255))
-        screen.blit(player_shield_text, (1200,10))
+        screen.blit(player_shield_text, (1180,10))
 
         shield_cooldown_font = pygame.font.SysFont('Algerian', 30)
         player_shield_cooldown_text = shield_cooldown_font.render(
                 "Cooldown Time: " + str(self.SpaceshipShields.SHIELDS_COOLDOWN), 1, (255,255,255))
-        screen.blit(player_shield_cooldown_text, (1200,40))
+        screen.blit(player_shield_cooldown_text, (1180,45))
 
     def rotate(self, clockwise=True):
         sign = 1 if clockwise else -1
@@ -304,7 +315,7 @@ class Spaceship(GameObject):
             self.ANGLE += 360
 
         self.direction.rotate_ip(angle)
-        print(f"Rotating to direction: {self.direction} and angle: {self.ANGLE}")
+        # print(f"Rotating to direction: {self.direction} and angle: {self.ANGLE}")
 
     def accelerate(self, velocity=None):
         if velocity != None:
