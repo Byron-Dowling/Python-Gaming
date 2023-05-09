@@ -1,25 +1,20 @@
-#from game_multiplayer import SpaceRocks
-from game_npc_ex import SpaceRocks
+"""
+    Author:   Byron Dowling, Deangelo Brown, Izzy Olaemimimo
+    Class:    5443 2D Python Gaming
+
+    Asset Credits:
+
+        Space Environment Sprites:
+            - Author: [FoozleCC]
+            - https://foozlecc.itch.io/void-fleet-pack-2
+            - https://foozlecc.itch.io/void-environment-pack
+            - https://foozlecc.itch.io/void-main-ship 
+            - https://norma-2d.itch.io/celestial-objects-pixel-art-pack
+
+"""
 from multi import SpaceRocks
 from messenger import Messenger
 import sys
-
-"""
- 
- ████████╗ ██████╗     ██████╗  ██████╗     ██╗     ██╗███████╗████████╗
- ╚══██╔══╝██╔═══██╗    ██╔══██╗██╔═══██╗    ██║     ██║██╔════╝╚══██╔══╝
-    ██║   ██║   ██║    ██║  ██║██║   ██║    ██║     ██║███████╗   ██║   
-    ██║   ██║   ██║    ██║  ██║██║   ██║    ██║     ██║╚════██║   ██║   
-    ██║   ╚██████╔╝    ██████╔╝╚██████╔╝    ███████╗██║███████║   ██║   
-    ╚═╝    ╚═════╝     ╚═════╝  ╚═════╝     ╚══════╝╚═╝╚══════╝   ╚═╝   
-                                                                        
- 
-    
-    - Find a different projectile or fix the rotation
-        - Rotation is happening the wrong way
-    - Do Collision detection between projectiles and players
-"""
-
 
 """
     Example Run commands:
@@ -45,12 +40,6 @@ creds = {
 
 if __name__ == "__main__":
 
-
-    
     multiplayer = Messenger(creds)
-
-#GC = GameController(multiplayer = multiplayer)
-    #space_rocks = SpaceRocks()
     space = SpaceRocks(multiplayer)
     space.main_loop()
-    #space_rocks.main_loop()

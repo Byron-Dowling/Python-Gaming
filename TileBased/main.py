@@ -2,6 +2,7 @@ import pygame
 import pytmx
 import sys
 
+
 pygame.init()
 
 # Set the position of the camera
@@ -14,7 +15,7 @@ screen_height = 500
 screen = pygame.display.set_mode((screen_width, screen_height))
 
 # Load the TMX file
-tmx_data = pytmx.util_pygame.load_pygame("UndergroundLava.tmx")
+tmx_data = pytmx.util_pygame.load_pygame("Platformer assets pack\Lava.tmx")
 
 # Create a Pygame surface with the same dimensions as the map
 map_surface = pygame.Surface((tmx_data.width * tmx_data.tilewidth, tmx_data.height * tmx_data.tileheight))

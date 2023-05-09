@@ -1,6 +1,6 @@
 import pygame
 
-from models import Asteroid, Spaceship, NPC, Background
+from models import Asteroid, Spaceship, Background
 from utils import get_random_position, load_sprite, print_text, load_sound
 from random import shuffle
 import ast
@@ -15,6 +15,22 @@ import sys
 import os
 
 
+""" 
+    ███████╗██████╗  █████╗  ██████╗███████╗ 
+    ██╔════╝██╔══██╗██╔══██╗██╔════╝██╔════╝ 
+    ███████╗██████╔╝███████║██║     █████╗   
+    ╚════██║██╔═══╝ ██╔══██║██║     ██╔══╝   
+    ███████║██║     ██║  ██║╚██████╗███████╗ 
+    ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚═════╝╚══════╝ 
+                                            
+    ██████╗  ██████╗  ██████╗██╗  ██╗███████╗
+    ██╔══██╗██╔═══██╗██╔════╝██║ ██╔╝██╔════╝
+    ██████╔╝██║   ██║██║     █████╔╝ ███████╗
+    ██╔══██╗██║   ██║██║     ██╔═██╗ ╚════██║
+    ██║  ██║╚██████╔╝╚██████╗██║  ██╗███████║
+    ╚═╝  ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚══════╝
+                                            
+"""
 class SpaceRocks:
     MIN_ASTEROID_DISTANCE = 250
 
@@ -32,6 +48,7 @@ class SpaceRocks:
         self.RS_Frame = 0
         self.BH_Frames = len(os.listdir("Assets/Background/BH"))
         self.BH_Frame = 0
+        self.ASTEROIDS_DESTROYED = 0
 
         ## Asteroid Stuff
         self.Locations = [(100,150),(300,300),(500,200),(1300,200),
@@ -46,19 +63,21 @@ class SpaceRocks:
         self.font = pygame.font.Font(None, 64)
         self.message = ""
 
-        #Colors = [(251,250,245),(199,206,250),(255,255,186),(186,225,255),(181,234,215),(255,183,178),(226,240,203),(224,187,228),(229,204,255),(236,221,185)]
-        #self.__color = Colors[player]
+        """
+        Colors = [(251,250,245),(199,206,250),(255,255,186),(186,225,255),
+        (181,234,215),(255,183,178),(226,240,203),(224,187,228),(229,204,255),
+        (236,221,185)]
+        self.__color = Colors[player] 
+        """
 
         self.__host = False
 
         self.asteroids = []
-        self.bullets = []
+        self.Missiles = []
         self.spaceship = Spaceship(
-            (random.randrange(100, self.screen.get_width() - 100), random.randrange(100, self.screen.get_height() - 100)), self.bullets.append
+            (random.randrange(100, self.screen.get_width() - 100), random.randrange(100, self.screen.get_height() - 100)), self.Missiles.append
         )
-        # self.spaceship = Spaceship(
-        #     (self.width // 2, self.height // 2), self.bullets.append
-        # )
+
         self.__messenger = multiplayer
 
 
@@ -84,31 +103,8 @@ class SpaceRocks:
 
         self.started = False
 
-        # self.npcs.append(
-        #     NPC(
-        #         (self.width * 0.05, self.height * 0.05),
-        #         self.bullets.append,
-        #         "space_ship5_40x40",
-        #         [self.spaceship],
-        #         other_npcs=self.npcs,
-        #     )
-        # )
-
-        # self.npcs.append(
-        #     NPC(
-        #         (self.width * 0.95, self.height * 0.95),
-        #         self.bullets.append,
-        #         "space_ship6_40x40",
-        #         [self.spaceship],
-        #         other_npcs=self.npcs,
-        #     )
-        # )
-
         for index, item in enumerate(self.Locations):
             self.asteroids.append(Asteroid(item, (150,150)))
-
-    def other_npcs(self):
-        return self.npcs
     
 
     def updateFrames(self):
@@ -126,6 +122,24 @@ class SpaceRocks:
             self.BH_Frame = 0
 
 
+
+    """
+            ███╗   ███╗ █████╗ ██╗███╗   ██╗                  
+            ████╗ ████║██╔══██╗██║████╗  ██║                  
+            ██╔████╔██║███████║██║██╔██╗ ██║                  
+            ██║╚██╔╝██║██╔══██║██║██║╚██╗██║                  
+            ██║ ╚═╝ ██║██║  ██║██║██║ ╚████║                  
+            ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝                  
+                                            
+            ██╗      ██████╗  ██████╗ ██████╗ 
+            ██║     ██╔═══██╗██╔═══██╗██╔══██╗
+            ██║     ██║   ██║██║   ██║██████╔╝
+            ██║     ██║   ██║██║   ██║██╔═══╝ 
+            ███████╗╚██████╔╝╚██████╔╝██║     
+            ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝     
+                                                
+ 
+    """
     def main_loop(self):
         pygame.mixer.music.load("game.mp3")
         pygame.mixer.music.play()     
@@ -144,8 +158,25 @@ class SpaceRocks:
 
     def _init_pygame(self):
         pygame.init()
-        pygame.display.set_caption("Space Rocks")
+        pygame.display.set_caption("Asteroid Destroyer")
 
+
+    """
+            ██╗  ██╗ █████╗ ███╗   ██╗██████╗ ██╗     ███████╗     
+            ██║  ██║██╔══██╗████╗  ██║██╔══██╗██║     ██╔════╝     
+            ███████║███████║██╔██╗ ██║██║  ██║██║     █████╗       
+            ██╔══██║██╔══██║██║╚██╗██║██║  ██║██║     ██╔══╝       
+            ██║  ██║██║  ██║██║ ╚████║██████╔╝███████╗███████╗     
+            ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝ ╚══════╝╚══════╝     
+                                                        
+                 ██╗███╗   ██╗██████╗ ██╗   ██╗████████╗
+                 ██║████╗  ██║██╔══██╗██║   ██║╚══██╔══╝
+                 ██║██╔██╗ ██║██████╔╝██║   ██║   ██║   
+                 ██║██║╚██╗██║██╔═══╝ ██║   ██║   ██║   
+                 ██║██║ ╚████║██║     ╚██████╔╝   ██║   
+                 ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝    ╚═╝   
+                                                        
+    """
     def _handle_input(self):
 
         sendMessage = False
@@ -155,7 +186,6 @@ class SpaceRocks:
         }
 
         for event in pygame.event.get():
-            #self.started = True
             if event.type == pygame.QUIT or (
                 event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
             ):
@@ -176,13 +206,11 @@ class SpaceRocks:
         is_key_pressed = pygame.key.get_pressed()
         
         
-
         if not self.started:
             if is_key_pressed[pygame.K_g]:
                 self.started = True
 
         if self.spaceship:
-            # print(f"velocity: {self.spaceship.velocity}")
             if is_key_pressed[pygame.K_RIGHT]:
                 self.spaceship.rotate(clockwise=True)
                 sendMessage = True
@@ -212,16 +240,25 @@ class SpaceRocks:
                 self.__sendMessage(Message)
 
 
+
+    """
+         ██████╗  █████╗ ███╗   ███╗███████╗    ██╗      ██████╗  ██████╗ ██╗ ██████╗
+        ██╔════╝ ██╔══██╗████╗ ████║██╔════╝    ██║     ██╔═══██╗██╔════╝ ██║██╔════╝
+        ██║  ███╗███████║██╔████╔██║█████╗      ██║     ██║   ██║██║  ███╗██║██║     
+        ██║   ██║██╔══██║██║╚██╔╝██║██╔══╝      ██║     ██║   ██║██║   ██║██║██║     
+        ╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗    ███████╗╚██████╔╝╚██████╔╝██║╚██████╗
+         ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝    ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝ ╚═════╝
+                                                                                    
+    """
     def _process_game_logic(self):
         for game_object in self._get_game_objects():
-            #print(game_object)
             if game_object:
                 try:
                     game_object.drawAsteroid(self.screen)
                 except:
                     game_object.move(self.screen)
 
-        ## Not sure we care about spaceship asteroid collisions
+        
         if self.spaceship:
             for asteroid in self.asteroids:
                 if asteroid.collides_with(self.spaceship, self.spaceship.Shields):
@@ -236,23 +273,15 @@ class SpaceRocks:
                             self.message = "You lost!"
                             break
 
-        if len(self.npcs) > 0:
-            for npc in self.npcs:
-                npc.choose_target()
-                npc.rotate()
-                npc.follow_target()
-                # npc.check_shoot()
-
-        for bullet in self.bullets[:]:
+        for Missile in self.Missiles[:]:
             for asteroid in self.asteroids[:]:
                 if asteroid.Exploding == False:
-                    if asteroid.collides_with(bullet):
+                    if asteroid.collides_with(Missile):
                         self.ASTEROID_COUNT -= 1
-                        if self.spaceship:
-                            self.spaceship.ASTEROIDS_DESTROYED += 1
+                        self.ASTEROIDS_DESTROYED += 1
                         asteroid.Exploding = True
                         self.explosion.play()
-                        self.bullets.remove(bullet)
+                        self.Missiles.remove(Missile)
                         break
 
         for asteroid in self.asteroids[:]:
@@ -262,10 +291,10 @@ class SpaceRocks:
             else:
                 self.asteroids.remove(asteroid)
 
-        for bullet in self.bullets[:]:
-            print(bullet)
-            if not self.screen.get_rect().collidepoint(bullet.position):
-                self.bullets.remove(bullet)
+        for Missile in self.Missiles[:]:
+            print(Missile)
+            if not self.screen.get_rect().collidepoint(Missile.position):
+                self.Missiles.remove(Missile)
 
         if self.ASTEROID_COUNT < 6:
             shuffle(self.Locations)
@@ -275,6 +304,16 @@ class SpaceRocks:
                 self.ASTEROID_COUNT += 1
 
 
+
+    """
+        ██████╗ ██████╗  █████╗ ██╗    ██╗
+        ██╔══██╗██╔══██╗██╔══██╗██║    ██║
+        ██║  ██║██████╔╝███████║██║ █╗ ██║
+        ██║  ██║██╔══██╗██╔══██║██║███╗██║
+        ██████╔╝██║  ██║██║  ██║╚███╔███╔╝
+        ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚══╝╚══╝ 
+                                        
+    """
     def _draw(self):
 
         self.screen.fill((0, 0, 0))
@@ -300,14 +339,24 @@ class SpaceRocks:
         if self.spaceship:
             self.spaceship.drawHealthBar(self.screen)
             self.spaceship.drawShieldBar(self.screen)
-            self.spaceship.drawAsteroidKills(self.screen)
+        
+        self.drawAsteroidKills(self.screen)
 
 
         pygame.display.flip()
         self.clock.tick(60)
 
+
+    def drawAsteroidKills(self, screen):
+        kill_font = pygame.font.SysFont('Algerian', 30)
+        player_kills_text = kill_font.render(
+                "Team Asteroid Kills: " + str(self.ASTEROIDS_DESTROYED), 1, (255,255,255))
+        screen.blit(player_kills_text, (10,10))
+
+
+
     def _get_game_objects(self):
-        game_objects = [*self.asteroids, *self.bullets]
+        game_objects = [*self.asteroids, *self.Missiles]
 
         if self.spaceship:
             game_objects.append(self.spaceship)
@@ -321,6 +370,7 @@ class SpaceRocks:
 
         return game_objects
     
+
     def __receiveMessage(self, ch, method, properties, body):
         """
         Receives messages from the server and handles them
@@ -341,10 +391,10 @@ class SpaceRocks:
         if bodyDic['Type'] == 'Join' and bodyDic['from'] != self.__messenger.user and bodyDic['from'] not in self.__playerIds:
             #print('\n' + str(bodyDic['Message']))
             
-            self.__otherPlayers.append(Spaceship(bodyDic['Ship'][0], self.bullets.append))
+            self.__otherPlayers.append(Spaceship(bodyDic['Ship'][0], self.Missiles.append))
 
             # append(Ship(bodyDic['Ship'][0], len(self.__otherPlayers)+1, bodyDic['Ship'][1]))
-            self.__allPlayers.append(Spaceship(bodyDic['Ship'][0], self.bullets.append))
+            self.__allPlayers.append(Spaceship(bodyDic['Ship'][0], self.Missiles.append))
             
 
             self.__playerIds.append(bodyDic['from'])

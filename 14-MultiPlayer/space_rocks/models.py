@@ -2,13 +2,11 @@ from pygame.math import Vector2
 from pygame import transform
 from pygame import time
 from PIL import Image
-
-import random
 from utils import get_random_velocity, load_sound, load_sprite, load_sprite_rotated, wrap_position, distance
 import math
 import os
 import pygame
-
+import random
 import json
 
 UP = Vector2(0, -1)
@@ -208,10 +206,10 @@ class Shields(GameSprite):
         else:
             self.SHIELDS_COOLDOWN -= 1
 
-            if self.SHIELDS_COOLDOWN == 0:
-                self.COOLING_DOWN = False
-                self.SHIELD_HEALTH = 76
-                self.SHIELDS_COOLDOWN = 100
+        if self.SHIELDS_COOLDOWN == 0:
+            self.COOLING_DOWN = False
+            self.SHIELD_HEALTH = 76
+            self.SHIELDS_COOLDOWN = 100
 
 ###################################################################################################
 """
@@ -266,10 +264,10 @@ class GameObject:
 class Spaceship(GameObject):
     MANEUVERABILITY = 5
     ACCELERATION = 0.25
-    BULLET_SPEED = 50
+    Missile_SPEED = 50
 
-    def __init__(self, position, bullet_callback=None, image ="space_ship_40x40.png"):
-        self.bullet_callback = bullet_callback
+    def __init__(self, position, Missile_callback=None, image ="space_ship_40x40.png"):
+        self.Missile_callback = Missile_callback
         self.laser_sound = load_sound("fireEffect")
         self.tick = 0
         self.frame = 0
@@ -277,14 +275,9 @@ class Spaceship(GameObject):
         self.image = f"Assets\Spaceships\Idle\{self.frame}.png"
         self.RED = (255,0,0)
         self.GREEN = (0,255,0)
-        self.ASTEROIDS_DESTROYED = 0
-
-        # Make a copy of the original UP vector
         self.direction = Vector2(UP)
         self.ANGLE = 0
         self.HEALTH = 10
-
-        ## Shields stuff
         self.Shields = False
         self.SpaceshipShields = Shields(tuple(position))
 
@@ -298,8 +291,9 @@ class Spaceship(GameObject):
         return json.dumps(attributes)
 
     def getAttributes(self):
-        """Returns the basic attributes needed to set up a copy of this object
-        possibly in a multiplayer setting.
+        """
+            Returns the basic attributes needed to set up a copy of this object
+            possibly in a multiplayer setting.
         """
         return self.__str__()
 
@@ -312,13 +306,6 @@ class Spaceship(GameObject):
     
     def getVelocity(self):
         return self.velocity.x, self.velocity.y
-    
-    def drawAsteroidKills(self, screen):
-        kill_font = pygame.font.SysFont('Algerian', 30)
-        player_kills_text = kill_font.render(
-                "Asteroid Kills: " + str(self.ASTEROIDS_DESTROYED), 1, (255,255,255))
-        screen.blit(player_kills_text, (1180,80))
-
 
     def drawHealthBar(self, screen):
         pygame.draw.rect(screen, self.RED, (self.position[0] - 25, self.position[1] + 50, 50, 10))
@@ -383,147 +370,27 @@ class Spaceship(GameObject):
 
 
     def shoot(self):
-        bullet_velocity = self.direction * self.BULLET_SPEED + self.velocity
-        bullet = Bullet(tuple(self.position), bullet_velocity, self.ANGLE)
-        self.bullet_callback(bullet)
+        Missile_velocity = self.direction * self.Missile_SPEED + self.velocity
+        missile = Missile(tuple(self.position), Missile_velocity, self.ANGLE)
+        self.Missile_callback(missile)
         self.laser_sound.play()
 
-
 ###################################################################################################
-"""
- 
- ███╗   ██╗   ██████╗  ██████╗
- ████╗  ██║   ██╔══██╗██╔════╝
- ██╔██╗ ██║   ██████╔╝██║     
- ██║╚██╗██║   ██╔═══╝ ██║     
- ██║ ╚████║██╗██║██╗  ╚██████╗
- ╚═╝  ╚═══╝╚═╝╚═╝╚═╝   ╚═════╝
-                              
-"""
-class NPC(Spaceship):
-    def __init__(
-        self,
-        position,
-        bullet_callback,
-        ship="space_ship5_40x40",
-        targets=[],
-        other_npcs=None,
-    ):
-        self.targets = targets
-        self.acceleration = 0.10
-        self.speed = random.randint(4, 9)
-        self.rotation_speed = random.randint(3, 5)
-        self.direction = Vector2(0, 1)
-        self.prevVelocity = Vector2(0)
-        self.last_randrot_direction = None
-        self.tracking_velocity = random.uniform(1.70, 3.0)
-        self.other_npcs = other_npcs
-        self.bullet_callback = bullet_callback
-
-        self.last_shot_time = 0  # clock tick of last shot
-        self.shoot_delay = 250  # millisecond delay between shots
-        self.max_shots = self.shoot_delay * 4  # max shots in a group or in a row
-        self.shot_time_total = 0  # sum of group shots
-        self.shoot_window = (
-            1100  # max time a group of shots can be grouped before cooldown
-        )
-        self.shoot_cooldown = 2000  # delay between shout groupings
-        self.cooldown = 0
-
-        super().__init__(position, bullet_callback, ship)
-
-    def accelerate(self):
-        self.velocity += self.direction * self.acceleration
-
-    def choose_target(self):
-        closestDistance = pow(2, 20)
-        closestTarget = None
-        for target in self.targets:
-            d = distance(target.position, self.position)
-            if distance(target.position, self.position) < closestDistance:
-                closestTarget = target
-                closestDistance = d
-
-        self.target = closestTarget
-
-    def rotate(self):
-        if self.target is not None:
-            target_direction = self.target.position - self.position
-            target_angle = math.degrees(
-                math.atan2(target_direction.y, target_direction.x)
-            )
-            # Added this so it would rotate in proper direction
-            target_angle *= -1
-
-            diff_angle = (target_angle - self.direction.angle_to(Vector2(0, 0))) % 360
-
-            if diff_angle < 180:
-                self.direction.rotate_ip(-min(360 - diff_angle, self.rotation_speed))
-            else:
-                self.direction.rotate_ip(min(diff_angle, self.rotation_speed))
-
-    def follow_target(self):
-        """Always move toward target"""
-
-        closest_npc = pow(2, 20)
-        for other in self.other_npcs:
-            if other == self:
-                continue
-            else:
-                dis_other = distance(other.position, self.position)
-                if dis_other < closest_npc:
-                    closest_npc = dis_other
-        # print(f"dis_other: {dis_other}")
-        if self.target is not None:
-            if dis_other < 100:
-                direction = self.direction.rotate_ip(min(30, self.rotation_speed))
-            else:
-                direction = self.direction
-                self.velocity = direction * self.tracking_velocity
-
-    # def check_shoot(self):
-    #     self.target_distance = distance(self.target.position, self.position)
-    #     current_time = time.get_ticks()
-
-    #     if self.target_distance < 300:
-    #         time_from_last_shot = current_time - self.last_shot_time
-    #         # check if enough time has elapsed to shoot again
-
-    #         if (
-    #             time_from_last_shot > self.shoot_delay
-    #             and self.cooldown < self.shoot_cooldown
-    #         ):
-    #             self.shot_time_total += self.shoot_delay
-    #             self.last_shot_time = current_time
-    #             if self.shot_time_total < self.shoot_window:
-    #                 self.shoot()
-    #             else:
-    #                 self.shot_time_total = 0
-    #                 self.cooldown += time_from_last_shot
-
-
-###################################################################################################
-"""
- 
- ██████╗ ██╗   ██╗██╗     ██╗     ███████╗████████╗
- ██╔══██╗██║   ██║██║     ██║     ██╔════╝╚══██╔══╝
- ██████╔╝██║   ██║██║     ██║     █████╗     ██║   
- ██╔══██╗██║   ██║██║     ██║     ██╔══╝     ██║   
- ██████╔╝╚██████╔╝███████╗███████╗███████╗   ██║   
- ╚═════╝  ╚═════╝ ╚══════╝╚══════╝╚══════╝   ╚═╝   
-                                                   
-"""                                                               
-class Bullet(GameObject):
+""" 
+ ███╗   ███╗██╗███████╗███████╗██╗██╗     ███████╗
+ ████╗ ████║██║██╔════╝██╔════╝██║██║     ██╔════╝
+ ██╔████╔██║██║███████╗███████╗██║██║     █████╗  
+ ██║╚██╔╝██║██║╚════██║╚════██║██║██║     ██╔══╝  
+ ██║ ╚═╝ ██║██║███████║███████║██║███████╗███████╗
+ ╚═╝     ╚═╝╚═╝╚══════╝╚══════╝╚═╝╚══════╝╚══════╝
+                                                  
+"""                                                           
+class Missile(GameObject):
     def __init__(self, position, velocity, firingAngle):
-        """
-            load_sprite_rotated(imageLink, smsc, angle, with_alpha=True)
-        """
         self.frame = 0
         self.frames = len(os.listdir("Assets\Sprites\Projectile"))
         self.ANGLE = firingAngle
         self.imageLink = f"Assets\Sprites\Projectile\{self.frame}.png"
-
-        print(f"Firing a bullet at {self.ANGLE} degrees.")
 
         super().__init__(position, load_sprite_rotated(self.imageLink, (100,100), firingAngle), velocity)
 
