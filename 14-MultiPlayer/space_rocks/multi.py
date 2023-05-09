@@ -224,7 +224,7 @@ class SpaceRocks:
         ## Not sure we care about spaceship asteroid collisions
         if self.spaceship:
             for asteroid in self.asteroids:
-                if asteroid.collides_with(self.spaceship):
+                if asteroid.collides_with(self.spaceship, self.spaceship.Shields):
 
                     asteroid.velocity *= -1
 

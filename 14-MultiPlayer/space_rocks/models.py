@@ -86,9 +86,13 @@ class GameSprite(pygame.sprite.Sprite):
         else:
             self.position = (self.position + self.velocity)
 
-    def collides_with(self, other_obj):
-        distance = self.position.distance_to(other_obj.position)
-        return distance < self.radius + other_obj.radius
+    def collides_with(self, other_obj, SHIELDS=False):
+        if not SHIELDS:
+            distance = self.position.distance_to(other_obj.position)
+            return distance < (self.radius + other_obj.radius) - 50
+        else:
+            distance = self.position.distance_to(other_obj.position)
+            return distance < (self.radius + other_obj.radius)
 
 ###################################################################################################
 """
@@ -210,6 +214,22 @@ class Shields(GameSprite):
                 self.SHIELDS_COOLDOWN = 100
 
 ###################################################################################################
+"""
+  ██████╗  █████╗ ███╗   ███╗███████╗              
+ ██╔════╝ ██╔══██╗████╗ ████║██╔════╝              
+ ██║  ███╗███████║██╔████╔██║█████╗                
+ ██║   ██║██╔══██║██║╚██╔╝██║██╔══╝                
+ ╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗              
+  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝              
+                                                   
+  ██████╗ ██████╗      ██╗███████╗ ██████╗████████╗
+ ██╔═══██╗██╔══██╗     ██║██╔════╝██╔════╝╚══██╔══╝
+ ██║   ██║██████╔╝     ██║█████╗  ██║        ██║   
+ ██║   ██║██╔══██╗██   ██║██╔══╝  ██║        ██║   
+ ╚██████╔╝██████╔╝╚█████╔╝███████╗╚██████╗   ██║   
+  ╚═════╝ ╚═════╝  ╚════╝ ╚══════╝ ╚═════╝   ╚═╝   
+                                                   
+"""
 
 class GameObject:
     def __init__(self, position, sprite, velocity):
@@ -224,13 +244,25 @@ class GameObject:
 
     def move(self, surface):
         self.position = wrap_position(self.position + self.velocity, surface)
-        # print(f"pos: {self.position}")
 
-    def collides_with(self, other_obj):
-        distance = self.position.distance_to(other_obj.position)
-        return distance < self.radius + other_obj.radius
+    def collides_with(self, other_obj, SHIELDS=False):
+        if not SHIELDS:
+            distance = self.position.distance_to(other_obj.position)
+            return distance < (self.radius + other_obj.radius) - 50
+        else:
+            distance = self.position.distance_to(other_obj.position)
+            return distance < (self.radius + other_obj.radius)
 
-
+###################################################################################################
+"""
+ ███████╗██████╗  █████╗  ██████╗███████╗███████╗██╗  ██╗██╗██████╗ 
+ ██╔════╝██╔══██╗██╔══██╗██╔════╝██╔════╝██╔════╝██║  ██║██║██╔══██╗
+ ███████╗██████╔╝███████║██║     █████╗  ███████╗███████║██║██████╔╝
+ ╚════██║██╔═══╝ ██╔══██║██║     ██╔══╝  ╚════██║██╔══██║██║██╔═══╝ 
+ ███████║██║     ██║  ██║╚██████╗███████╗███████║██║  ██║██║██║     
+ ╚══════╝╚═╝     ╚═╝  ╚═╝ ╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝╚═╝     
+                                                                    
+"""
 class Spaceship(GameObject):
     MANEUVERABILITY = 5
     ACCELERATION = 0.25
@@ -246,6 +278,7 @@ class Spaceship(GameObject):
         self.RED = (255,0,0)
         self.GREEN = (0,255,0)
         self.ASTEROIDS_DESTROYED = 0
+
         # Make a copy of the original UP vector
         self.direction = Vector2(UP)
         self.ANGLE = 0
@@ -254,9 +287,6 @@ class Spaceship(GameObject):
         ## Shields stuff
         self.Shields = False
         self.SpaceshipShields = Shields(tuple(position))
-
-        # self.ship_stuff = self.__str__()['ship_image']
-        # self.ship_loc = self.__str__()['position']
 
         super().__init__(position, load_sprite(self.image, (85,85)), Vector2(0))
 
@@ -316,7 +346,6 @@ class Spaceship(GameObject):
             self.ANGLE += 360
 
         self.direction.rotate_ip(angle)
-        # print(f"Rotating to direction: {self.direction} and angle: {self.ANGLE}")
 
     def accelerate(self, velocity=None):
         if velocity != None:
@@ -360,6 +389,17 @@ class Spaceship(GameObject):
         self.laser_sound.play()
 
 
+###################################################################################################
+"""
+ 
+ ███╗   ██╗   ██████╗  ██████╗
+ ████╗  ██║   ██╔══██╗██╔════╝
+ ██╔██╗ ██║   ██████╔╝██║     
+ ██║╚██╗██║   ██╔═══╝ ██║     
+ ██║ ╚████║██╗██║██╗  ╚██████╗
+ ╚═╝  ╚═══╝╚═╝╚═╝╚═╝   ╚═════╝
+                              
+"""
 class NPC(Spaceship):
     def __init__(
         self,
@@ -462,6 +502,17 @@ class NPC(Spaceship):
     #                 self.cooldown += time_from_last_shot
 
 
+###################################################################################################
+"""
+ 
+ ██████╗ ██╗   ██╗██╗     ██╗     ███████╗████████╗
+ ██╔══██╗██║   ██║██║     ██║     ██╔════╝╚══██╔══╝
+ ██████╔╝██║   ██║██║     ██║     █████╗     ██║   
+ ██╔══██╗██║   ██║██║     ██║     ██╔══╝     ██║   
+ ██████╔╝╚██████╔╝███████╗███████╗███████╗   ██║   
+ ╚═════╝  ╚═════╝ ╚══════╝╚══════╝╚══════╝   ╚═╝   
+                                                   
+"""                                                               
 class Bullet(GameObject):
     def __init__(self, position, velocity, firingAngle):
         """
