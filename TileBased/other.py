@@ -1,21 +1,6 @@
-"""
-    Author:   Byron Dowling, Deangelo Brown, Izzy Olaemimimo
-    Class:    5443 2D Python Gaming
-
-    Asset Credits:
-
-        Sprite:
-            - Author: [Elthen's Pixel Art Shop]
-            - https://elthen.itch.io/2d-pixel-art-archaeologist 
-
-        Tileset Art:
-            - Author: ["BigBuckBunny"]
-            - https://bigbuckbunny.itch.io/platform-assets-pack
-
-"""
-
 import pygame
 import pytmx
+import csv
 import sys
 from pygame import transform
 from pygame.image import load
@@ -85,23 +70,7 @@ class IllinoisJackson:
         surface.blit(self.SpriteObject, blit_position)
 
 
-###################################################################################################
-"""
-  ██████╗  █████╗ ███╗   ███╗███████╗                                
- ██╔════╝ ██╔══██╗████╗ ████║██╔════╝                                
- ██║  ███╗███████║██╔████╔██║█████╗                                  
- ██║   ██║██╔══██║██║╚██╔╝██║██╔══╝                                  
- ╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗                                
-  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝                                
-                                                                     
- ██╗   ██╗ █████╗ ██████╗ ██╗ █████╗ ██████╗ ██╗     ███████╗███████╗
- ██║   ██║██╔══██╗██╔══██╗██║██╔══██╗██╔══██╗██║     ██╔════╝██╔════╝
- ██║   ██║███████║██████╔╝██║███████║██████╔╝██║     █████╗  ███████╗
- ╚██╗ ██╔╝██╔══██║██╔══██╗██║██╔══██║██╔══██╗██║     ██╔══╝  ╚════██║
-  ╚████╔╝ ██║  ██║██║  ██║██║██║  ██║██████╔╝███████╗███████╗███████║
-   ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚══════╝╚══════╝
-                                                                     
-"""
+
 pygame.init()
 tick = 0
 
@@ -110,74 +79,84 @@ camera_x = 0
 camera_y = 460
 
 # Display a portion of the map surface
-screen_width = 1000
-screen_height = 500
+screen_width = 1500
+screen_height = 900
 screen = pygame.display.set_mode((screen_width, screen_height))
 
 IJ = IllinoisJackson((camera_x + 250, camera_y - 100), (100,100))
 
-## Set the title of the window
-banner = f'Illinois Jackson and the Shrine of Impending Dread'
-pygame.display.set_caption(banner)
-
 # Load the TMX file
 tmx_data = pytmx.util_pygame.load_pygame("Platformer assets pack\Level_1.tmx")
+
+# Load the collision layer CSV file
+with open("Platformer assets pack\Level_1.csv", "r") as f:
+    reader = csv.reader(f)
+    collision_data = [[int(cell) for cell in row] for row in reader]
+
+# Create a new layer in the TMX data object for the collision layer
+collision_layer = pytmx.TiledObjectGroup(IJ)
+collision_layer.name = "Collision"
+collision_layer.visible = False
+collision_layer.opacity = 1.0
+collision_layer.width = tmx_data.width
+collision_layer.height = tmx_data.height
+collision_layer.tiles = [[None for y in range(tmx_data.height)] for x in range(tmx_data.width)]
+
+# Iterate over the collision layer data and set the corresponding tiles in the collision layer object
+for x in range(tmx_data.width):
+    for y in range(tmx_data.height):
+        gid = collision_data[y][x]
+        if gid != 0:
+            tile = pytmx.TiledTile()
+            tile.gid = gid
+            tile.width = tmx_data.tilewidth
+            tile.height = tmx_data.tileheight
+            collision_layer.tiles[x][y] = tile
+
+# Add the collision layer to the TMX data object
+tmx_data.object_groups.append(collision_layer)
 
 # Create a Pygame surface with the same dimensions as the map
 map_surface = pygame.Surface((tmx_data.width * tmx_data.tilewidth, tmx_data.height * tmx_data.tileheight))
 
 # Iterate over all the layers in the map
 for layer in tmx_data.layers:
-    # Iterate over all the tiles in the layer
-    for x, y, image in layer.tiles():
-        # Calculate the position of the tile in pixels
-        px = x * tmx_data.tilewidth
-        py = y * tmx_data.tileheight
-        
-        # Blit the tile onto the map surface
-        map_surface.blit(image, (px, py))
+    # If the layer is not the collision layer, iterate over all the tiles in the layer and blit them onto the map surface
+    if layer.name != "Collision":
+        for x, y, image in layer.tiles():
+            # Calculate the position of the tile in pixels
+            px = x * tmx_data.tilewidth
+            py = y * tmx_data.tileheight
 
-"""
-  ██████╗  █████╗ ███╗   ███╗███████╗    ██╗      ██████╗  ██████╗ ██████╗ 
- ██╔════╝ ██╔══██╗████╗ ████║██╔════╝    ██║     ██╔═══██╗██╔═══██╗██╔══██╗
- ██║  ███╗███████║██╔████╔██║█████╗      ██║     ██║   ██║██║   ██║██████╔╝
- ██║   ██║██╔══██║██║╚██╔╝██║██╔══╝      ██║     ██║   ██║██║   ██║██╔═══╝ 
- ╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗    ███████╗╚██████╔╝╚██████╔╝██║     
-  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝    ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝     
-                                                                           
-"""
+            # Blit the tile onto the map surface
+            map_surface.blit(image, (px, py))
+
+
+# Main game loop
 while True:
     # Handle events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-            
+
     # Get the input from the arrow keys
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:
-        IJ.movePlayer(-1,0)
-        #camera_x -= 5
+        camera_x -= 5
     elif keys[pygame.K_RIGHT]:
-        IJ.movePlayer(1,0)
-        #camera_x += 5
+        camera_x += 5
     if keys[pygame.K_UP]:
         camera_y -= 5
     elif keys[pygame.K_DOWN]:
         camera_y += 5
-            
+
     # Clamp the camera position to the bounds of the map
     camera_x = max(0, min(camera_x, tmx_data.width * tmx_data.tilewidth - screen_width))
     camera_y = max(0, min(camera_y, tmx_data.height * tmx_data.tileheight - screen_height))
-    
+
     # Blit a portion of the map surface onto the screen
-    screen.blit(map_surface, (0, 0), pygame.Rect(camera_x, camera_y, screen_width, screen_height))
+    screen.blit(map_surface.subsurface(pygame.Rect(camera_x, camera_y, screen_width, screen_height)), (0, 0))
 
-    IJ.drawPlayer(screen)
-
-    if tick % 120 == 0:
-        IJ.updateFrames()
-    
-    tick += 1
-    # Update the screen
+    # Update the display
     pygame.display.flip()

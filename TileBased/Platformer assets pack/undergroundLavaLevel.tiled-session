@@ -6,12 +6,13 @@
     "activeFile": "",
     "expandedProjectPaths": [
     ],
+    "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
     },
     "last.exportedFilePath": "C:/Users/byron/OneDrive/Documents/Python Stuff/Python Gaming/TileBased/Platformer assets pack",
     "last.imagePath": "C:/Users/byron/OneDrive/Documents/Python Stuff/Python Gaming/TileBased/Platformer assets pack/Tileset",
     "map.height": 60,
-    "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
+    "map.lastUsedExportFilter": "CSV files (*.csv)",
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,

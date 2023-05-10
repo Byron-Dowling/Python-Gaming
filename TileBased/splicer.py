@@ -10,25 +10,24 @@
 from PIL import Image
 from os import mkdir
 
-#mkdir("Assets/Sprites/Shields")
+#mkdir("Sprites/Idle")
 sheet = Image.open("Archaeologist Sprite Sheet.png")
 count = 0
 
 width, height = sheet.size
 
-## Height: 360 Width = 5760
 print(f'Height: {height}, Width: {width}')
 
-strideLength = width/3
+strideLength = width/8
 
 left = 0
 right = strideLength
-top = 0
-bottom = height
+top = height - 160
+bottom = height - 128
 
-for x in range(3):
+for x in range(8):
     icon = sheet.crop((left, top, right, bottom))
-    icon.save("Assets/Sprites/Projectile/{}.png".format(count))
+    icon.save("Sprites/Roll/{}.png".format(count))
     count += 1
     right = right + strideLength
     left += strideLength

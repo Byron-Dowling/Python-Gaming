@@ -49,12 +49,14 @@ class SpaceRocks:
         self.BH_Frames = len(os.listdir("Assets/Background/BH"))
         self.BH_Frame = 0
         self.ASTEROIDS_DESTROYED = 0
+        self.ASTEROID_ATTACK_COUNTDOWN = 20
+        self.ATTACK = False
 
         ## Asteroid Stuff
         self.Locations = [(100,150),(300,300),(500,200),(1300,200),
-                                   (1100,600),(700,700),(1500,620),(650,150),
-                                   (1700,850),(900,800),(100,620),(150,150),
-                                   (1700,100),(100,800),(1100,120),(150,1000)]
+                                   (1100,600),(700,700),(1450,620),(650,150),
+                                   (1450,850),(900,800),(100,620),(150,150),
+                                   (1420,100),(100,800),(1100,120),(150,850)]
         
         self.ASTEROID_COUNT = len(self.Locations)
         self.explosion = load_sound("explosion")
@@ -260,18 +262,19 @@ class SpaceRocks:
 
         
         if self.spaceship:
-            for asteroid in self.asteroids:
-                if asteroid.collides_with(self.spaceship, self.spaceship.Shields):
+            if self.ATTACK:
+                for asteroid in self.asteroids:
+                    if asteroid.collides_with(self.spaceship, self.spaceship.Shields):
 
-                    asteroid.velocity *= -1
+                        asteroid.velocity *= -1
 
-                    if self.spaceship.Shields == False:
-                        self.spaceship.HEALTH -= 1
+                        if self.spaceship.Shields == False:
+                            self.spaceship.HEALTH -= 1
 
-                        if self.spaceship.HEALTH< 1:
-                            self.spaceship = None
-                            self.message = "You lost!"
-                            break
+                            if self.spaceship.HEALTH< 1:
+                                self.spaceship = None
+                                self.message = "You lost!"
+                                break
 
         for Missile in self.Missiles[:]:
             for asteroid in self.asteroids[:]:
@@ -302,6 +305,11 @@ class SpaceRocks:
             for index, item in enumerate(self.Locations):
                 self.asteroids.append(Asteroid(item, (150,150)))
                 self.ASTEROID_COUNT += 1
+
+        if not self.ATTACK:
+            self.ASTEROID_ATTACK_COUNTDOWN -= 1
+            if self.ASTEROID_ATTACK_COUNTDOWN == 0:
+                self.ATTACK = True
 
 
 
